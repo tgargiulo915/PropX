@@ -9,8 +9,14 @@ module.exports = async (req, res) => {
   // Monthly cap so the free RentCast plan is never exceeded. Fails closed.
   const LIMIT = parseInt(process.env.MONTHLY_REQUEST_LIMIT || "45", 10); // RentCast requests per month
   const COST = 3; // requests used per address lookup
-  const rUrl = process.env.UPSTASH_REDIS_REST_URL, rTok = process.env.UPSTASH_REDIS_REST_TOKEN;
+  let rUrl = (process.env.UPSTASH_REDIS_REST_URL || "").trim();
+  const rTok = (process.env.UPSTASH_REDIS_REST_TOKEN || "").trim();
   if (!rUrl || !rTok) return res.status(500).json({ error: "Usage counter isn't set up yet, so lookups are paused." });
+  if (!/^https?:\/\//i.test(rUrl)) {
+    if (/^rediss?:\/\//i.test(rUrl)) return res.status(500).json({ error: "UPSTASH_REDIS_REST_URL is the wrong kind of address. Use the REST URL that starts with https://, not the one that starts with redis." });
+    rUrl = "https://" + rUrl;
+  }
+  let why = "network error";
   try {
     const month = new Date().toISOString().slice(0, 7);
     const k = "propx:rentcast:" + month;
@@ -19,12 +25,13 @@ module.exports = async (req, res) => {
       headers: { Authorization: "Bearer " + rTok, "Content-Type": "application/json" },
       body: JSON.stringify([["INCRBY", k, COST], ["EXPIRE", k, 3000000]]),
     });
+    why = "Upstash replied " + r.status + (r.status === 401 ? ", so the token looks wrong" : "");
     const out = await r.json();
     const used = Number(out && out[0] && out[0].result);
     if (!r.ok || !isFinite(used)) throw new Error("counter");
     if (used > LIMIT) return res.status(429).json({ error: "Free lookups are used up for this month. Enter your numbers manually below." });
   } catch (e) {
-    return res.status(500).json({ error: "Usage counter is unavailable, so lookups are paused." });
+    return res.status(500).json({ error: "Usage counter is unavailable (" + why + "), so lookups are paused." });
   }
 
   const q = encodeURIComponent(address);
