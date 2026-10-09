@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PropX — Know the numbers before you buy.</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800;900&display=swap">
+<style>
+:root{--hero:#0B3B36;--hi:#EAF4F1;--hm:#9EC2BA;--brass:#E0A526;--paper:#F7F6F2;--card:#fff;--ink:#16211F;--mute:#5E6B68;--line:#DAD8CF;--good:#117A55;--warn:#B45309;--bad:#B42318;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hero:#082A27;--paper:#101716;--card:#182120;--ink:#E7EEEC;--mute:#97A8A4;--line:#27332F;--good:#4CC38A;--warn:#F0A44B;--bad:#F27B70}}
+:root[data-theme="dark"]{--hero:#082A27;--paper:#101716;--card:#182120;--ink:#E7EEEC;--mute:#97A8A4;--line:#27332F;--good:#4CC38A;--warn:#F0A44B;--bad:#F27B70}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.55 Archivo,system-ui,sans-serif}
+h1,h2{margin:0;line-height:1.02;letter-spacing:-.03em;font-weight:900}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+.top{background:var(--hero);color:var(--hi)}
+nav{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.logo{font-weight:900;font-size:20px;letter-spacing:-.03em;color:var(--hi);text-decoration:none}.logo b{color:var(--brass)}
+nav a.l{color:var(--hm);text-decoration:none;font-weight:500;margin-left:22px;font-size:15px}
+.hero{padding:48px 0 64px}
+.hero h1{font-size:clamp(46px,9vw,108px);max-width:11ch}
+.hero p{max-width:56ch;color:var(--hm);font-size:19px;margin:22px 0 30px}
+.bar{display:flex;max-width:660px;background:var(--card);border-radius:8px;padding:6px;gap:6px}
+.bar input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:500 17px Archivo,sans-serif;padding:12px 14px}
+.bar input:focus-visible{outline:none}.bar:focus-within{outline:3px solid var(--brass)}
+.btn{border:0;background:var(--brass);color:#2A1D00;font:800 16px Archivo,sans-serif;padding:12px 22px;border-radius:5px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.line{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+.hint{font-size:14px;color:var(--hm);margin-top:12px;min-height:21px}
+section{padding:60px 0}
+h2{font-size:clamp(32px,5vw,52px);max-width:16ch;margin-bottom:26px}
+.rep{display:grid;grid-template-columns:290px 1fr;gap:26px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px}
+.score{text-align:center}.score svg{width:170px;height:170px}
+.score .n{font:900 44px Archivo;fill:var(--ink)}
+.score .t{font-weight:800;font-size:20px;margin-top:4px}
+.score small{display:block;color:var(--mute);font-size:14px;margin-top:4px}
+.score .btn{margin-top:18px;width:100%}
+.addr{font-weight:600;font-size:15px;color:var(--mute);margin:0 0 6px}
+.badge{font-size:13px;color:var(--warn);margin:0 0 14px}
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab{border:1.5px solid var(--line);background:transparent;color:var(--ink);font:600 15px Archivo,sans-serif;padding:8px 16px;border-radius:99px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ins{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:6px}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:3px}
+.ins input,.em input{width:100%;font:500 16px Archivo,sans-serif;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+.kv{display:grid;grid-template-columns:1fr auto;gap:7px 16px;margin:18px 0 0;font-size:15px}
+.kv dt{color:var(--mute)}.kv dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.kv .tot{border-top:1px solid var(--line);padding-top:8px;color:var(--ink)}
+h3{font-size:18px;margin:22px 0 8px;font-weight:800;letter-spacing:-.01em}
+.flags{list-style:none;margin:0;padding:0;font-size:15px;display:grid;gap:7px}
+.flags li{padding-left:22px;position:relative}
+.flags li::before{content:"";position:absolute;left:0;top:.45em;width:11px;height:11px;border-radius:50%;background:var(--warn)}
+.flags li.bad::before{background:var(--bad)}.flags li.ok::before{background:var(--good)}
+.comps{width:100%;border-collapse:collapse;font-size:14px}
+.comps th,.comps td{text-align:left;padding:7px 8px 7px 0;border-bottom:1px solid var(--line)}
+.comps th{color:var(--mute);font-weight:600}.comps td:last-child,.comps th:last-child{text-align:right}
+.wide{overflow-x:auto}
+.fine{font-size:13px;color:var(--mute);margin-top:14px}
+.items{columns:3;column-gap:40px;list-style:none;padding:0;margin:0}
+.items li{break-inside:avoid;padding:12px 0;border-bottom:1px solid var(--line)}
+.items b{display:block}.items span{color:var(--mute);font-size:15px}
+.band{background:var(--hero);color:var(--hi)}.band h2{max-width:20ch}
+.pain{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+.pain p{color:var(--hm);font-size:19px;margin:0 0 14px}
+.who{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin:0}
+.who dt{font-weight:900;font-size:21px;letter-spacing:-.02em;margin-bottom:6px;border-top:4px solid var(--brass);padding-top:10px}
+.who dd{margin:0;color:var(--mute);font-size:15px}
+.em{display:flex;gap:8px;max-width:520px;flex-wrap:wrap}.em input{flex:1;min-width:200px;padding:12px}
+.msg{margin-top:10px;font-size:15px;min-height:22px}
+.list{margin-top:18px;font-size:14px;color:var(--mute)}
+footer{background:var(--hero);color:var(--hm);padding:36px 0;font-size:13px}
+footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
+@media (max-width:860px){.rep,.pain{grid-template-columns:1fr}.items{columns:2}.who{grid-template-columns:1fr 1fr}}
+@media (max-width:520px){.items{columns:1}.who{grid-template-columns:1fr}.bar{flex-direction:column}.ins{grid-template-columns:1fr 1fr}nav a.l{display:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="top"><div class="wrap">
+<nav><a class="logo" href="#">Prop<b>X</b></a><div><a class="l" href="#report">Report</a><a class="l" href="#who">Who it's for</a><a class="l" href="#access">Early access</a></div></nav>
+<header class="hero">
+<h1>Know the numbers before you buy.</h1>
+<p>Enter an address. PropX estimates the price, comps, repairs, rent and expenses, then works out profit, ROI and what to investigate.</p>
+<form class="bar" id="go"><input id="addr" aria-label="Property address" placeholder="Enter a property address, e.g. 123 Maple St, Columbus, OH"><button class="btn" id="gob" type="submit">Check this property</button></form>
+<div class="hint" id="hint" aria-live="polite"></div>
+</header>
+</div></div>
+
+<section class="wrap" id="report">
+<h2>Your deal report.</h2>
+<div class="rep">
+<div class="panel score" aria-live="polite">
+<svg viewBox="0 0 140 140" role="img" aria-label="Deal score"><circle cx="70" cy="70" r="56" fill="none" stroke="var(--line)" stroke-width="12"/><circle id="ring" cx="70" cy="70" r="56" fill="none" stroke="var(--good)" stroke-width="12" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="351.9" transform="rotate(-90 70 70)"/><text id="sc" class="n" x="70" y="82" text-anchor="middle">0</text></svg>
+<div class="t" id="st"></div><small id="ss"></small>
+<button class="btn line" id="dl" type="button">Download report</button>
+</div>
+<div class="panel">
+<p class="addr" id="ad">Sample property</p>
+<p class="badge" id="bd">Sample numbers. Enter an address above or type your own.</p>
+<div class="ins">
+<div><label for="price">Purchase price ($)</label><input id="price" type="number" inputmode="decimal" value="185000"></div>
+<div><label for="repairs">Repairs ($)</label><input id="repairs" type="number" inputmode="decimal" value="45000"></div>
+<div><label for="arv">Renovated value ($)</label><input id="arv" type="number" inputmode="decimal" value="310000"></div>
+<div><label for="rent">Rent ($/month)</label><input id="rent" type="number" inputmode="decimal" value="2100"></div>
+<div><label for="tax">Taxes ($/year)</label><input id="tax" type="number" inputmode="decimal" value="3600"></div>
+<div><label for="ins">Insurance ($/year)</label><input id="ins" type="number" inputmode="decimal" value="1400"></div>
+<div><label for="other">Other ($/month)</label><input id="other" type="number" inputmode="decimal" value="150"></div>
+<div><label for="months">Months held</label><input id="months" type="number" inputmode="decimal" value="6"></div>
+<div><label for="ltv">Loan (% of price)</label><input id="ltv" type="number" inputmode="decimal" value="80"></div>
+<div><label for="rate">Interest rate (%)</label><input id="rate" type="number" inputmode="decimal" value="11"></div>
+<div><label for="buyc">Buying costs (%)</label><input id="buyc" type="number" inputmode="decimal" value="2"></div>
+<div><label for="sellc">Selling costs (%)</label><input id="sellc" type="number" inputmode="decimal" value="8"></div>
+</div>
+<div class="tabs" role="tablist" style="margin-top:14px"><button class="tab" role="tab" id="t1" aria-selected="true">Flip</button><button class="tab" role="tab" id="t2" aria-selected="false">Rental</button></div>
+<dl class="kv" id="kv"></dl>
+<div id="cw" hidden><h3>Comparable sales</h3><div class="wide"><table class="comps"><thead><tr><th>Address</th><th>Details</th><th>Sold</th><th>Price</th></tr></thead><tbody id="cb"></tbody></table></div></div>
+<h3>Check before you buy</h3>
+<ul class="flags" id="flags"></ul>
+<p class="fine">Value, rent, tax and comp figures are automated estimates from RentCast property data. Verify them before you make an offer. Not financial advice.</p>
+</div>
+</div>
+</section>
+
+<div class="band"><section class="wrap"><div class="pain"><div><h2>Deals shouldn't take ten tabs.</h2></div>
+<div><p>Figuring out whether a property makes sense usually means collecting data from many places and rebuilding it in a spreadsheet.</p><p>PropX puts it in one report and does the math.</p></div></div></section></div>
+
+<section class="wrap">
+<h2>What's in every report.</h2>
+<ul class="items">
+<li><b>🏠 Purchase price</b><span>What you pay and the max offer to make.</span></li>
+<li><b>📈 Comparable sales</b><span>Nearby sales that support your numbers.</span></li>
+<li><b>🔨 Repair costs</b><span>Estimated or entered.</span></li>
+<li><b>💰 Renovated value</b><span>Potential value after repairs.</span></li>
+<li><b>🏘️ Rental income</b><span>Estimated rent and cash flow.</span></li>
+<li><b>💸 Taxes and expenses</b><span>The ongoing costs people forget.</span></li>
+<li><b>🏦 Financing and holding</b><span>Interest and carrying costs.</span></li>
+<li><b>📊 Profit and ROI</b><span>What you could make on your cash.</span></li>
+<li><b>⚠️ Things to investigate</b><span>Gaps to check before you commit.</span></li>
+</ul>
+</section>
+
+<section class="wrap" id="who" style="padding-top:0">
+<h2>Built for investors.</h2>
+<dl class="who">
+<div><dt>Individual investors</dt><dd>See if a property is worth your cash.</dd></div>
+<div><dt>House flippers</dt><dd>Know your offer, budget and profit before you bid.</dd></div>
+<div><dt>Wholesalers</dt><dd>Back up your numbers for the buyer.</dd></div>
+<div><dt>Small investment companies</dt><dd>Run every deal the same way.</dd></div>
+</dl>
+</section>
+
+<div class="band"><section class="wrap" id="access">
+<h2>Get early access.</h2>
+<form class="em" id="sf"><div style="flex:1;min-width:220px"><label for="email" style="color:var(--hm)">Email address</label><input id="email" type="email" required placeholder="you@example.com"></div><button class="btn" id="sb" type="submit" style="align-self:flex-end">Request access</button></form>
+<div class="msg" id="sm" aria-live="polite"></div>
+<div class="list" id="sl" hidden></div>
+</section></div>
+
+<footer><div class="wrap"><p><b>PropX</b> — Know the numbers before you buy.</p>
+<p>Estimates for informational purposes only. Not financial, legal or investment advice. Verify all figures independently before making an offer.</p></div></footer>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var ids=["price","repairs","arv","rent","tax","ins","other","months","ltv","rate","buyc","sellc"];
+var mode="flip",comps=[],aiFlags=[],last="";
+var usd=function(n){return (n<0?"-$":"$")+Math.abs(Math.round(n)).toLocaleString("en-US")};
+var pct=function(n){return (isFinite(n)?(n*100).toFixed(1):"0.0")+"%"};
+var esc=function(s){var d=document.createElement("div");d.textContent=String(s==null?"":s);return d.innerHTML};
+function row(l,v,c){return '<dt'+(c?' class="'+c+'"':'')+'>'+l+'</dt><dd'+(c?' class="'+c+'"':'')+'>'+v+'</dd>'}
+function calc(){
+var v={};ids.forEach(function(i){v[i]=parseFloat($(i).value)||0});
+var loan=v.price*v.ltv/100,buyC=v.price*v.buyc/100,sell=v.arv*v.sellc/100;
+var interest=loan*(v.rate/100)/12*v.months,carry=(v.tax/12+v.ins/12+v.other)*v.months;
+var total=v.price+v.repairs+buyC+interest+carry+sell,profit=v.arv-total;
+var cash=v.price-loan+v.repairs+buyC+interest+carry,roi=cash>0?profit/cash:0,margin=v.arv>0?profit/v.arv:0;
+var maxOffer=v.arv*.7-v.repairs;
+var egi=v.rent*12*.95,opex=v.tax+v.ins+v.other*12,noi=egi-opex,allIn=v.price+v.repairs+buyC;
+var cap=allIn>0?noi/allIn:0,rule=allIn>0?v.rent/allIn:0;
+var s=Math.max(0,Math.min(100,Math.round(margin/.2*100)));
+var col=s>=70?"var(--good)":s>=40?"var(--warn)":"var(--bad)";
+$("ring").style.stroke=col;$("ring").setAttribute("stroke-dashoffset",351.9*(1-s/100));
+$("sc").textContent=s;
+$("st").textContent=s>=70?"Strong flip":s>=40?"Thin margin":"Weak flip";$("st").style.color=col;
+$("ss").textContent=usd(profit)+" profit, "+pct(roi)+" ROI";
+$("kv").innerHTML=mode==="flip"
+?row("Purchase + buying costs",usd(v.price+buyC))+row("Repairs",usd(v.repairs))+row("Loan interest",usd(interest))+row("Taxes, insurance, other",usd(carry))+row("Selling costs",usd(sell))+row("Total cost",usd(total),"tot")+row("Estimated profit",usd(profit))+row("ROI on cash invested ("+usd(cash)+")",pct(roi))+row("Max offer (70% rule)",usd(maxOffer))
+:row("Rent after 5% vacancy",usd(egi)+"/yr")+row("Taxes, insurance, expenses","-"+usd(opex)+"/yr")+row("Net operating income",usd(noi)+"/yr","tot")+row("Cap rate on all-in cost",pct(cap))+row("Rent / all-in cost",pct(rule));
+var f=[];
+if(v.arv>0){if(v.price>maxOffer)f.push(["bad","Price is "+usd(v.price-maxOffer)+" over the 70% rule max offer of "+usd(maxOffer)+"."]);else f.push(["ok","Price is within the 70% rule max offer."]);}
+if(v.arv>0&&v.repairs/v.arv>.2)f.push(["","Repairs are "+pct(v.repairs/v.arv)+" of renovated value. Get contractor bids."]);
+if(v.price>0&&v.arv/v.price>1.8)f.push(["","Renovated value is "+(v.arv/v.price).toFixed(1)+"x the price. Confirm with recent comps."]);
+if(allIn>0&&rule<.01)f.push(["","Rent is under 1% of all-in cost, so a rental may be thin."]);
+if(noi<0)f.push(["bad","Rent doesn't cover expenses."]);
+aiFlags.forEach(function(t){f.push(["",t])});
+f.push(["","Check title, liens, permits, flood zone and tax reassessment."]);
+$("flags").innerHTML=f.map(function(x){return '<li class="'+x[0]+'">'+esc(x[1])+'</li>'}).join("");
+$("cw").hidden=!comps.length;
+$("cb").innerHTML=comps.map(function(c){return '<tr><td>'+esc(c.address)+'</td><td>'+esc(c.details)+'</td><td>'+esc(c.sold)+'</td><td>'+(isFinite(+c.price)?usd(+c.price):esc(c.price))+'</td></tr>'}).join("");
+last="PropX deal report\n"+($("ad").textContent)+"\n\n"+$("bd").textContent+"\n\nDeal score: "+s+"/100 ("+$("st").textContent+")\nEstimated profit: "+usd(profit)+"\nROI on cash invested: "+pct(roi)+"\nCash needed: "+usd(cash)+"\nMax offer (70% rule): "+usd(maxOffer)+"\n\nInputs\n"+ids.map(function(i){return i+": "+v[i]}).join("\n")+"\n\nRental\nNOI: "+usd(noi)+"/yr\nCap rate: "+pct(cap)+"\n\nComps\n"+(comps.map(function(c){return c.address+" | "+c.details+" | "+c.sold+" | "+c.price}).join("\n")||"none")+"\n\nCheck before you buy\n"+f.map(function(x){return "- "+x[1]}).join("\n")+"\n\nEstimates only. Not financial advice. Verify all figures.\n";
+}
+ids.forEach(function(i){$(i).addEventListener("input",calc)});
+function setMode(m){mode=m;$("t1").setAttribute("aria-selected",m==="flip");$("t2").setAttribute("aria-selected",m==="rental");calc()}
+$("t1").onclick=function(){setMode("flip")};$("t2").onclick=function(){setMode("rental")};
+
+$("go").addEventListener("submit",async function(e){
+e.preventDefault();
+var a=$("addr").value.trim();
+if(!a){$("hint").textContent="Enter a property address first.";return}
+$("ad").textContent=a;
+$("report").scrollIntoView({behavior:"smooth"});
+$("gob").disabled=true;$("gob").textContent="Looking up…";$("hint").textContent="Pulling property data…";
+try{
+var res=await fetch("/api/check?address="+encodeURIComponent(a));
+var r=await res.json();
+if(!res.ok)throw new Error(r.error||"Lookup failed");
+if(r.address)$("ad").textContent=r.address;
+if(r.arv)$("arv").value=Math.round(r.arv);
+if(r.rent)$("rent").value=Math.round(r.rent);
+if(r.tax)$("tax").value=Math.round(r.tax);
+comps=r.comps||[];aiFlags=r.notes||[];
+$("bd").textContent="Value, rent, taxes and comps come from RentCast. Purchase price, repairs and insurance are your own numbers, so enter them.";
+$("hint").textContent="Done. Enter your purchase price and repair costs.";
+calc();
+}catch(err){$("hint").textContent=err.message||"Couldn't get data. Enter your own numbers below."}
+finally{$("gob").disabled=false;$("gob").textContent="Check this property"}
+});
+
+$("dl").onclick=async function(){
+var d=null;try{d=await claude.use("downloads")}catch(x){}
+if(!d){var b=new Blob([last],{type:"text/plain"});var u=URL.createObjectURL(b);window.open(u);return}
+try{await d.save({filename:"propx-report.txt",data:last})}catch(e){}
+};
+
+var db=null;
+async function initDb(){
+try{db=await claude.use("db")}catch(x){}
+if(!db)return;
+try{
+var u=await claude.use("user");
+if(u&&await u.canEdit()){
+var snap=await db.collection("signups").get();
+var el=$("sl");el.hidden=false;
+el.textContent="Signups (only you can see this): "+(snap.docs.length?snap.docs.map(function(d){return d.data().email}).join(", "):"none yet");
+}}catch(x){}
+}
+$("sf").addEventListener("submit",async function(e){
+e.preventDefault();
+var em=$("email").value.trim(),m=$("sm");
+if(!db)await initDb();
+if(!db){m.innerHTML='Signups aren\'t available in this view. <a style="color:var(--brass)" href="mailto:hello@propx.ai?subject=PropX%20early%20access&body='+encodeURIComponent(em)+'">Email us instead</a>.';return}
+$("sb").disabled=true;
+try{await db.collection("signups").add({email:em,at:Date.now()});m.textContent="You're on the list. We'll email "+em+" when access opens.";$("email").value=""}
+catch(err){m.textContent="Couldn't save your signup. Try again in a moment."}
+finally{$("sb").disabled=false}
+});
+calc();initDb();
+})();
+</script>
+</body>
+</html>
