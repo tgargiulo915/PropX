@@ -9,18 +9,19 @@ module.exports = async (req, res) => {
   // Monthly cap so the free RentCast plan is never exceeded. Fails closed.
   const LIMIT = parseInt(process.env.MONTHLY_REQUEST_LIMIT || "45", 10); // RentCast requests per month
   const COST = 3; // requests used per address lookup
-  let rUrl = (process.env.UPSTASH_REDIS_REST_URL || "").trim();
-  const rTok = (process.env.UPSTASH_REDIS_REST_TOKEN || "").trim();
+  const clean = (s) => String(s || "").trim().replace(/^[A-Za-z_]+\s*=\s*/, "").replace(/^["']+|["']+$/g, "").trim();
+  let rUrl = clean(process.env.UPSTASH_REDIS_REST_URL);
+  const rTok = clean(process.env.UPSTASH_REDIS_REST_TOKEN);
   if (!rUrl || !rTok) return res.status(500).json({ error: "Usage counter isn't set up yet, so lookups are paused." });
-  if (!/^https?:\/\//i.test(rUrl)) {
-    if (/^rediss?:\/\//i.test(rUrl)) return res.status(500).json({ error: "UPSTASH_REDIS_REST_URL is the wrong kind of address. Use the REST URL that starts with https://, not the one that starts with redis." });
-    rUrl = "https://" + rUrl;
-  }
-  let why = "network error";
+  if (/^rediss?:\/\//i.test(rUrl)) return res.status(500).json({ error: "UPSTASH_REDIS_REST_URL is the wrong kind of address. Use the REST URL that starts with https://, not the one that starts with redis." });
+  if (!/^https?:\/\//i.test(rUrl)) rUrl = "https://" + rUrl;
+  let rBase;
+  try { rBase = new URL(rUrl).origin; } catch (e) { return res.status(500).json({ error: "UPSTASH_REDIS_REST_URL isn't a valid web address. Paste only the address that starts with https://." }); }
+  let why = "couldn't reach Upstash with that URL";
   try {
     const month = new Date().toISOString().slice(0, 7);
     const k = "propx:rentcast:" + month;
-    const r = await fetch(rUrl.replace(/\/$/, "") + "/pipeline", {
+    const r = await fetch(rBase + "/pipeline", {
       method: "POST",
       headers: { Authorization: "Bearer " + rTok, "Content-Type": "application/json" },
       body: JSON.stringify([["INCRBY", k, COST], ["EXPIRE", k, 3000000]]),
