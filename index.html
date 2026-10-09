@@ -101,6 +101,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <div class="panel">
 <p class="addr" id="ad">Sample property</p>
 <p class="badge" id="bd">Sample numbers. Enter an address above or type your own.</p>
+<div id="vc" hidden style="border-left:6px solid var(--good);padding:2px 0 2px 14px;margin:0 0 18px"><small style="color:var(--mute)">Estimated home value (automated estimate, not an appraisal)</small><div id="vv" style="font:900 clamp(32px,6vw,46px) Archivo,sans-serif;letter-spacing:-.03em"></div><small id="vr" style="color:var(--mute)"></small></div>
 <div class="ins">
 <div><label for="price">Purchase price ($)</label><input id="price" type="number" inputmode="decimal" value="185000"></div>
 <div><label for="repairs">Repairs ($)</label><input id="repairs" type="number" inputmode="decimal" value="45000"></div>
@@ -219,6 +220,7 @@ var res=await fetch("/api/check?address="+encodeURIComponent(a));
 var r=await res.json();
 if(!res.ok)throw new Error(r.error||"Lookup failed");
 if(r.address)$("ad").textContent=r.address;
+if(r.value){$("vv").textContent=usd(r.value);$("vr").textContent=(r.low&&r.high)?"Likely range "+usd(r.low)+" to "+usd(r.high):"";$("vc").hidden=false}else{$("vc").hidden=true}
 if(r.arv)$("arv").value=Math.round(r.arv);
 if(r.rent)$("rent").value=Math.round(r.rent);
 if(r.tax)$("tax").value=Math.round(r.tax);
@@ -226,7 +228,7 @@ comps=r.comps||[];aiFlags=r.notes||[];
 $("bd").textContent="Value, rent, taxes and comps come from RentCast. Purchase price, repairs and insurance are your own numbers, so enter them.";
 $("hint").textContent="Done. Enter your purchase price and repair costs.";
 calc();
-}catch(err){$("hint").textContent=err.message||"Couldn't get data. Enter your own numbers below."}
+}catch(err){$("vc").hidden=true;$("hint").textContent=err.message||"Couldn't get data. Enter your own numbers below."}
 finally{$("gob").disabled=false;$("gob").textContent="Check this property"}
 });
 
