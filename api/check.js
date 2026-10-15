@@ -74,6 +74,29 @@ module.exports = async (req, res) => {
     sold: String(c.removedDate || c.listedDate || "").slice(0, 7),
     price: c.price,
   }));
+  const f = (p && p.features) || {};
+  const sp = (val && val.subjectProperty) || {};
+  const pick = (a, b) => (a !== undefined && a !== null ? a : b);
+  const details = {
+    type: pick(p && p.propertyType, sp.propertyType),
+    beds: pick(p && p.bedrooms, sp.bedrooms),
+    baths: pick(p && p.bathrooms, sp.bathrooms),
+    sqft: pick(p && p.squareFootage, sp.squareFootage),
+    lot: pick(p && p.lotSize, sp.lotSize),
+    year: pick(p && p.yearBuilt, sp.yearBuilt),
+    stories: f.floorCount,
+    garage: f.garage, garageSpaces: f.garageSpaces,
+    pool: f.pool, fireplace: f.fireplace,
+    cooling: f.cooling, coolingType: f.coolingType,
+    heating: f.heating, heatingType: f.heatingType,
+    roof: f.roofType, exterior: f.exteriorType, foundation: f.foundationType,
+    hoa: p && p.hoa && p.hoa.fee,
+    county: pick(p && p.county, sp.county),
+    zoning: p && p.zoning, subdivision: p && p.subdivision,
+    lastSalePrice: p && p.lastSalePrice, lastSaleDate: p && p.lastSaleDate,
+    ownerOccupied: p ? p.ownerOccupied : undefined,
+    lat: pick(p && p.latitude, sp.latitude), lon: pick(p && p.longitude, sp.longitude),
+  };
   const notes = [];
   if (p) {
     if (p.yearBuilt) notes.push("Built in " + p.yearBuilt + ". Check roof, plumbing, electrical and HVAC age.");
@@ -86,6 +109,6 @@ module.exports = async (req, res) => {
   res.status(200).json({
     address: (p && p.formattedAddress) || (val && val.subjectProperty && val.subjectProperty.formattedAddress) || address,
     value: val && val.price, low: val && val.priceRangeLow, high: val && val.priceRangeHigh,
-    arv: val && val.price, rent: rent && rent.rent, tax, comps, notes,
+    arv: val && val.price, rent: rent && rent.rent, tax, comps, notes, details,
   });
 };
