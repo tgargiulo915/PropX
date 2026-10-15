@@ -1,5 +1,86 @@
 // Vercel serverless function (goes in the api folder).
 // Needs env vars: RENTCAST_API_KEY, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+// ---- Permit history from free city open-data portals (public records) ----
+const SUF = new Set(["ST", "AVE", "AV", "DR", "RD", "BLVD", "LN", "CT", "PL", "WAY", "TER", "TERR", "CIR", "PKWY", "HWY", "TRL", "LOOP", "PATH", "PT", "SQ", "ALY", "XING", "RUN", "ROW", "CV", "PASS"]);
+const DIRS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"];
+function parseStreet(addr) {
+  const line = String(addr).split(",")[0].toUpperCase().replace(/[^A-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  const m = /^(\d+)\s+(.+)$/.exec(line);
+  if (!m) return null;
+  const toks = m[2].split(" ");
+  const si = toks.findIndex((t, i) => i > 0 && SUF.has(t));
+  const core = si >= 0 ? toks.slice(0, si) : toks;
+  if (!core.length) return null;
+  const dir = core.length > 1 && DIRS.includes(core[0]) ? core[0] : null;
+  return { num: m[1], base: core.join(" "), dir, nodir: core.slice(dir ? 1 : 0).join(" ") };
+}
+const NOISE = /garage sale|administrative|\bsigns?\b|banner|special event|contractor change|right.?of.?way|\btree/i;
+const TAGS = [
+  ["Roof", /roof|re-?roof|shingle/i], ["HVAC", /hvac|a\/c|air.?cond|furnace|mechanical|heat pump/i],
+  ["Electrical", /electric|panel|service upgrade|wiring/i], ["Plumbing", /plumb|re-?pipe|water heater|sewer|gas line|backflow/i],
+  ["Remodel", /remodel|renovat|alter|repair|interior|kitchen|bath/i], ["Addition", /addition|new construction|new dwelling/i],
+  ["Pool", /pool|\bspa\b/i], ["Foundation", /foundation|pier|slab|underpin/i], ["Windows/doors", /window|door/i],
+  ["Solar", /solar|photovoltaic|\bpv\b/i], ["Demolition", /demo/i],
+];
+const jget = async (url) => {
+  const r = await fetch(url, { signal: AbortSignal.timeout(4500), headers: { Accept: "application/json" } });
+  if (!r.ok) throw new Error("permit " + r.status);
+  return r.json();
+};
+async function permitLookup(fullAddr) {
+  try {
+    const parts = String(fullAddr).split(",");
+    const city = parts[1] ? parts[1].trim().toLowerCase() : "";
+    const a = parseStreet(fullAddr);
+    if (!a) return null;
+    const like = a.num + " " + a.base;
+    const q = (o) => new URLSearchParams(o).toString();
+    let rows = [], name = "", range = "recent years";
+    if (city === "san antonio") {
+      name = "San Antonio"; range = "2020 to present";
+      const rids = ["c21106f9-3ef5-4f3a-8604-f992b4db7512", "c22b1ef2-dcf8-4d77-be1a-ee3638092aab"];
+      const out = await Promise.all(rids.map((rid) => jget("https://data.sanantonio.gov/api/3/action/datastore_search_sql?sql=" + encodeURIComponent("SELECT \"PERMIT TYPE\" AS t, \"WORK TYPE\" AS w, \"DATE ISSUED\" AS d, \"DECLARED VALUATION\" AS c FROM \"" + rid + "\" WHERE \"ADDRESS\" ILIKE '" + like + " %' OR \"ADDRESS\" ILIKE '" + like + ",%' ORDER BY \"DATE ISSUED\" DESC LIMIT 30")).catch(() => null)));
+      out.forEach((j) => ((j && j.result && j.result.records) || []).forEach((r) => rows.push({ date: r.d, type: r.t, desc: r.w, cost: r.c, status: "Issued" })));
+    } else if (city === "chicago") {
+      name = "Chicago";
+      const where = "street_number='" + a.num + "' AND upper(street_name) like '" + a.nodir + " %'" + (a.dir ? " AND street_direction='" + a.dir + "'" : "") + " AND issue_date IS NOT NULL";
+      const j = await jget("https://data.cityofchicago.org/resource/ydr8-5enu.json?" + q({ $where: where, $order: "issue_date DESC", $limit: "30" }));
+      j.forEach((r) => rows.push({ date: r.issue_date, type: String(r.permit_type || "").replace(/^PERMIT\s*[–-]\s*/i, ""), desc: r.work_description || r.work_type, status: r.permit_status }));
+    } else if (city === "austin") {
+      name = "Austin";
+      const j = await jget("https://data.austintexas.gov/resource/3syk-w9eu.json?" + q({ $where: "upper(permit_location) like '" + like + " %' AND issue_date IS NOT NULL", $order: "issue_date DESC", $limit: "30" }));
+      j.forEach((r) => rows.push({ date: r.issue_date, type: r.permit_type_desc, desc: (r.work_class ? r.work_class + ": " : "") + (r.description || ""), status: r.status_current }));
+    } else if (city === "seattle") {
+      name = "Seattle";
+      const j = await jget("https://data.seattle.gov/resource/76t5-zqzr.json?" + q({ $where: "upper(originaladdress1) like '" + like + " %' AND issueddate IS NOT NULL", $order: "issueddate DESC", $limit: "30" }));
+      j.forEach((r) => rows.push({ date: r.issueddate, type: r.permittypedesc, desc: r.description, cost: r.estprojectcost, status: r.statuscurrent }));
+    } else if (city === "los angeles") {
+      name = "Los Angeles"; range = "2020 to present";
+      const j = await jget("https://data.lacity.org/resource/pi9x-tg5x.json?" + q({ $where: "upper(primary_address) like '" + like + " %' AND issue_date IS NOT NULL", $order: "issue_date DESC", $limit: "30" }));
+      j.forEach((r) => rows.push({ date: r.issue_date, type: [r.permit_type, r.permit_sub_type].filter(Boolean).join(" / "), desc: r.work_desc, cost: r.valuation, status: r.status_desc }));
+    } else {
+      return null;
+    }
+    const seen = new Set();
+    const items = rows.map((r) => ({
+      date: String(r.date || "").slice(0, 10),
+      type: String(r.type || "Permit").replace(/\s+/g, " ").trim().slice(0, 80),
+      desc: String(r.desc || "").replace(/\s+/g, " ").trim().slice(0, 180),
+      cost: Number(r.cost) > 0 ? Math.round(Number(r.cost)) : null,
+      status: String(r.status || "").slice(0, 40),
+    })).filter((i) => i.date && !NOISE.test(i.type + " " + i.desc)).filter((i) => {
+      const k = i.date + "|" + i.type + "|" + i.desc;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    }).sort((x, y) => (x.date < y.date ? 1 : -1));
+    items.forEach((i) => { i.tags = TAGS.filter((t) => t[1].test(i.type + " " + i.desc)).map((t) => t[0]); });
+    return { city: name, range, total: items.length, items: items.slice(0, 12) };
+  } catch (e) {
+    return null;
+  }
+}
+
 module.exports = async (req, res) => {
   const address = String(req.query.address || "").slice(0, 200).trim();
   if (!address) return res.status(400).json({ error: "Enter an address." });
@@ -170,6 +251,7 @@ module.exports = async (req, res) => {
   const stM = /,\s*([A-Z]{2})\s+\d{5}/.exec(fullAddr);
   const where = (details.county ? details.county + " County " : "") + (stM ? stM[1] + " " : "");
   const gs = (t) => "https://www.google.com/search?q=" + encodeURIComponent(where + t);
+  const permits = await permitLookup(fullAddr);
   const checks = [];
   const add = (level, title, problem, why, how, link, linkText) => checks.push({ level, title, problem, why, how, link, linkText });
 
@@ -255,6 +337,22 @@ module.exports = async (req, res) => {
       "Check 3 active rental listings nearby for similar bed, bath and size.");
   }
 
+  if (permits) {
+    if (permits.items.length) {
+      const top = permits.items[0];
+      const tagSet = [...new Set(permits.items.flatMap((i) => i.tags))];
+      add("", "Renovation and permit history (" + permits.city + " records)",
+        permits.total + " permit" + (permits.total === 1 ? "" : "s") + " on record at this address (" + permits.range + "). Most recent: " + top.date + ", " + top.type + (top.desc ? " (" + top.desc.slice(0, 90) + ")" : "") + "." + (tagSet.length ? " Work types seen: " + tagSet.join(", ") + "." : ""),
+        "Recent permitted work such as a roof, HVAC or remodel can mean the home is worth more than an as-is estimate and may need fewer repairs. Work with no permit, or an open permit that was never finished or inspected, can become your problem.",
+        "Open the full list in the report, confirm each job was finished and passed inspection, and ask the seller for receipts and warranties.");
+    } else {
+      add("", "Renovation and permit history (" + permits.city + " records)",
+        "No permits found at this address in " + permits.city + "'s open permit data (" + permits.range + ").",
+        "No permits can mean no major work, work done without a permit, or work before the data starts. The estimate can't assume any renovations either way.",
+        "Ask the seller for a list of improvements with receipts, and search the city permit portal.");
+    }
+  }
+
   add("bad", "Liens and title",
     "Not in our data. Unpaid property taxes, HOA dues, contractor liens, court judgments and code fines can attach to the home.",
     "Liens stay with the property, so the buyer can end up paying them, and they can block a clean sale or loan.",
@@ -277,6 +375,6 @@ module.exports = async (req, res) => {
   res.status(200).json({
     address: fullAddr,
     value: best, rcValue: asIs, low: bestLow, high: bestHigh,
-    arv, rent: rent && rent.rent, tax, comps, checks, details, est, photo,
+    arv, rent: rent && rent.rent, tax, comps, checks, details, est, photo, permits,
   });
 };
