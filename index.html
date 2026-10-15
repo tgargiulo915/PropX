@@ -87,6 +87,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 .pmap iframe{width:100%;height:220px;border:0;border-radius:8px;background:var(--paper)}
 .plinks{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:8px;font-size:14px}
 .plinks a{color:var(--ink);font-weight:600}
+.pmap img.ph{width:100%;max-height:300px;object-fit:cover;border-radius:8px;margin-bottom:6px;background:var(--paper)}
 .pmap small{display:block;color:var(--mute);font-size:12px;margin-top:6px}
 @media (max-width:520px){.facts{grid-template-columns:1fr 1fr}}
 </style>
@@ -222,7 +223,7 @@ ids.forEach(function(i){$(i).addEventListener("input",calc)});
 function setMode(m){mode=m;$("t1").setAttribute("aria-selected",m==="flip");$("t2").setAttribute("aria-selected",m==="rental");calc()}
 $("t1").onclick=function(){setMode("flip")};$("t2").onclick=function(){setMode("rental")};
 
-function showDetails(d,addr){
+function showDetails(d,addr,photo){
 var box=$("pd");if(!d){box.hidden=true;return}
 var n=function(x){return (x===null||x===undefined||x==="")?null:x};
 var num=function(x){var v=Number(x);return isFinite(v)&&v>0?v.toLocaleString("en-US"):null};
@@ -244,6 +245,9 @@ if(d.ownerOccupied===false)chips.push("Not owner-occupied");
 $("pt").innerHTML=chips.map(function(c){return '<li>'+esc(c)+'</li>'}).join("");
 var pm=$("pm"),lat=Number(d.lat),lon=Number(d.lon),html="";
 var q=encodeURIComponent(addr||"");
+if(photo&&/^https:\/\//.test(photo.url||"")){
+html+='<img class="ph" src="'+esc(photo.url)+'" alt="Street-level photo near the property" loading="lazy"><small>Street-level photo'+(photo.date?' from '+esc(photo.date):'')+' via Mapillary (CC BY-SA). It may not show this exact house.</small>';
+}
 if(isFinite(lat)&&isFinite(lon)&&lat&&lon){
 var bb=[lon-0.004,lat-0.003,lon+0.004,lat+0.003].map(function(x){return x.toFixed(5)}).join("%2C");
 html+='<iframe loading="lazy" title="Map of the property" src="https://www.openstreetmap.org/export/embed.html?bbox='+bb+'&layer=mapnik&marker='+lat.toFixed(5)+'%2C'+lon.toFixed(5)+'"></iframe>';
@@ -267,8 +271,8 @@ var res=await fetch("/api/check?address="+encodeURIComponent(a));
 var r=await res.json();
 if(!res.ok)throw new Error(r.error||"Lookup failed");
 if(r.address)$("ad").textContent=r.address;
-showDetails(r.details,r.address||a);
-if(r.value){$("vv").textContent=usd(r.value);$("vr").textContent=(r.low&&r.high)?"Likely range "+usd(r.low)+" to "+usd(r.high):"";$("vc").hidden=false}else{$("vc").hidden=true}
+showDetails(r.details,r.address||a,r.photo);
+if(r.value){$("vv").textContent=usd(r.value);var vt=(r.low&&r.high)?"Likely range "+usd(r.low)+" to "+usd(r.high)+". ":"";if(r.est)vt+="Comp check: median "+usd(r.est.psf)+"/sq ft across "+r.est.n+" sales implies "+usd(r.est.comp)+" ("+usd(r.est.low)+" to "+usd(r.est.high)+"). ";if(r.arv&&r.arv>r.value)vt+="Renovated value uses the upper comps: "+usd(r.arv)+".";$("vr").textContent=vt;$("vc").hidden=false}else{$("vc").hidden=true}
 if(r.arv)$("arv").value=Math.round(r.arv);
 if(r.rent)$("rent").value=Math.round(r.rent);
 if(r.tax)$("tax").value=Math.round(r.tax);
