@@ -1,5 +1,5 @@
 // Vercel serverless function (goes in the api folder).
-// Needs env vars: RENTCAST_API_KEY, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+// Needs env vars: RENTCAST_API_KEY, UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN (and ADMIN_SECRET for the admin page)
 // ---- Permit history from free city open-data portals (public records) ----
 const SUF = new Set(["ST", "AVE", "AV", "DR", "RD", "BLVD", "LN", "CT", "PL", "WAY", "TER", "TERR", "CIR", "PKWY", "HWY", "TRL", "LOOP", "PATH", "PT", "SQ", "ALY", "XING", "RUN", "ROW", "CV", "PASS"]);
 const DIRS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"];
@@ -89,40 +89,67 @@ async function permitLookup(fullAddr) {
   }
 }
 
+const clean = (s) => String(s || "").trim().replace(/^[A-Za-z_]+\s*=\s*/, "").replace(/^["']+|["']+$/g, "").trim();
+function redisConf() {
+  let u = clean(process.env.UPSTASH_REDIS_REST_URL);
+  const t = clean(process.env.UPSTASH_REDIS_REST_TOKEN);
+  if (!u || !t) return { err: "Usage counter isn't set up yet, so searches are paused." };
+  if (/^rediss?:\/\//i.test(u)) return { err: "UPSTASH_REDIS_REST_URL is the wrong kind of address. Use the REST URL that starts with https://." };
+  if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+  try { return { base: new URL(u).origin, tok: t }; } catch (e) { return { err: "UPSTASH_REDIS_REST_URL isn't a valid web address." }; }
+}
+async function pipe(conf, cmds) {
+  const r = await fetch(conf.base + "/pipeline", { method: "POST", headers: { Authorization: "Bearer " + conf.tok, "Content-Type": "application/json" }, body: JSON.stringify(cmds) });
+  if (!r.ok) throw new Error("Upstash replied " + r.status);
+  const out = await r.json();
+  return out.map((o) => { if (o && o.error) throw new Error(o.error); return o.result; });
+}
+
 module.exports = async (req, res) => {
+  // Never cache: every search must be checked against the customer's plan.
+  res.setHeader("Cache-Control", "private, no-store");
   const address = String(req.query.address || "").slice(0, 200).trim();
   if (!address) return res.status(400).json({ error: "Enter an address." });
   const key = (process.env.RENTCAST_API_KEY || "").trim();
   if (!key) return res.status(500).json({ error: "Server is missing RENTCAST_API_KEY." });
 
-  // Monthly cap so the free RentCast plan is never exceeded. Fails closed.
-  const LIMIT = parseInt(process.env.MONTHLY_REQUEST_LIMIT || "45", 10); // RentCast requests per month
-  const COST = 3; // requests used per address lookup
-  const clean = (s) => String(s || "").trim().replace(/^[A-Za-z_]+\s*=\s*/, "").replace(/^["']+|["']+$/g, "").trim();
-  let rUrl = clean(process.env.UPSTASH_REDIS_REST_URL);
-  const rTok = clean(process.env.UPSTASH_REDIS_REST_TOKEN);
-  if (!rUrl || !rTok) return res.status(500).json({ error: "Usage counter isn't set up yet, so lookups are paused." });
-  if (/^rediss?:\/\//i.test(rUrl)) return res.status(500).json({ error: "UPSTASH_REDIS_REST_URL is the wrong kind of address. Use the REST URL that starts with https://, not the one that starts with redis." });
-  if (!/^https?:\/\//i.test(rUrl)) rUrl = "https://" + rUrl;
-  let rBase;
-  try { rBase = new URL(rUrl).origin; } catch (e) { return res.status(500).json({ error: "UPSTASH_REDIS_REST_URL isn't a valid web address. Paste only the address that starts with https://." }); }
-  let why = "couldn't reach Upstash with that URL";
+  // Each customer has their own access key and monthly search allowance.
+  const ck = String(req.headers["x-access-key"] || "").trim();
+  if (!/^px_[a-f0-9]{24}$/.test(ck)) return res.status(401).json({ error: "Enter your access key to run a search.", needKey: true });
+  const conf = redisConf();
+  if (conf.err) return res.status(500).json({ error: conf.err });
+  const month = new Date().toISOString().slice(0, 7);
+  const ukey = "propx:use:" + ck + ":" + month;
+  const gkey = "propx:rentcast:" + month;
+  const LIMIT = parseInt(process.env.MONTHLY_REQUEST_LIMIT || "45", 10); // our own RentCast requests per month
+  const COST = 3; // RentCast requests used behind one customer search
+  const unavailable = (e) => res.status(500).json({ error: "Usage counter is unavailable (" + (e && e.message ? e.message : "error") + "), so searches are paused." });
+  let cust;
   try {
-    const month = new Date().toISOString().slice(0, 7);
-    const k = "propx:rentcast:" + month;
-    const r = await fetch(rBase + "/pipeline", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + rTok, "Content-Type": "application/json" },
-      body: JSON.stringify([["INCRBY", k, COST], ["EXPIRE", k, 3000000]]),
-    });
-    why = "Upstash replied " + r.status + (r.status === 401 ? ", so the token looks wrong" : "");
-    const out = await r.json();
-    const used = Number(out && out[0] && out[0].result);
-    if (!r.ok || !isFinite(used)) throw new Error("counter");
-    if (used > LIMIT) return res.status(429).json({ error: "Free lookups are used up for this month. Enter your numbers manually below." });
-  } catch (e) {
-    return res.status(500).json({ error: "Usage counter is unavailable (" + why + "), so lookups are paused." });
+    const [raw] = await pipe(conf, [["GET", "propx:cust:" + ck]]);
+    cust = raw ? JSON.parse(raw) : null;
+  } catch (e) { return unavailable(e); }
+  if (!cust) return res.status(401).json({ error: "That access key isn't valid. Check it and try again.", needKey: true });
+  if (cust.active === false) return res.status(403).json({ error: "This access key is turned off. Contact support." });
+  const limit = Number(cust.limit) || 0;
+  let used;
+  try {
+    const out = await pipe(conf, [["INCRBY", ukey, 1], ["EXPIRE", ukey, 3000000]]);
+    used = Number(out[0]);
+  } catch (e) { return unavailable(e); }
+  const refund = async () => { try { await pipe(conf, [["DECRBY", ukey, 1]]); } catch (e) { /* best effort */ } };
+  if (used > limit) {
+    await refund();
+    return res.status(429).json({ error: "You've used all " + limit + " searches in your plan this month. Upgrade your plan or wait until next month.", used: limit, limit });
   }
+  try {
+    const out = await pipe(conf, [["INCRBY", gkey, COST], ["EXPIRE", gkey, 3000000]]);
+    if (Number(out[0]) > LIMIT) {
+      await pipe(conf, [["DECRBY", gkey, COST]]);
+      await refund();
+      return res.status(503).json({ error: "Search capacity for this month has been reached. Please contact support." });
+    }
+  } catch (e) { await refund(); return unavailable(e); }
 
   const q = encodeURIComponent(address);
   const get = async (p) => {
@@ -147,6 +174,7 @@ module.exports = async (req, res) => {
     else if (codes.some((c) => c === 429)) e = "RentCast request limit reached (code 429). Try again later.";
     else if (codes.every((c) => c === 404)) e = "No data found for that address. Include street, city, state and ZIP.";
     else e = "RentCast lookup failed (codes " + codes.join(", ") + "). Check your key and plan, then try again.";
+    await refund();
     return res.status(502).json({ error: e });
   }
 
@@ -379,10 +407,9 @@ module.exports = async (req, res) => {
   const order = { bad: 0, warn: 1, "": 2, ok: 3 };
   checks.sort((a, b) => order[a.level] - order[b.level]);
 
-  res.setHeader("Cache-Control", "s-maxage=3600");
   res.status(200).json({
     address: fullAddr,
     value: best, rcValue: asIs, low: bestLow, high: bestHigh,
-    arv, rent: rent && rent.rent, tax, comps, checks, details, est, photo, permits,
+    arv, rent: rent && rent.rent, tax, comps, checks, details, est, photo, permits, usage: { used, limit },
   });
 };
