@@ -51,10 +51,10 @@ label{display:block;font-size:13px;color:var(--mute);margin-bottom:3px}
 .kv dt{color:var(--mute)}.kv dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
 .kv .tot{border-top:1px solid var(--line);padding-top:8px;color:var(--ink)}
 h3{font-size:18px;margin:22px 0 8px;font-weight:800;letter-spacing:-.01em}
-.flags{list-style:none;margin:0;padding:0;font-size:15px;display:grid;gap:7px}
+.flags{list-style:none;margin:0;padding:0;font-size:15px;display:grid;gap:14px}
 .flags li{padding-left:22px;position:relative}
 .flags li::before{content:"";position:absolute;left:0;top:.45em;width:11px;height:11px;border-radius:50%;background:var(--warn)}
-.flags li.bad::before{background:var(--bad)}.flags li.ok::before{background:var(--good)}
+.flags li.bad::before{background:var(--bad)}.flags li.ok::before{background:var(--good)}.flags li.n::before{background:var(--mute)}.flags li b{display:block}.flags li span{display:block;font-size:14px;color:var(--mute);margin-top:3px}.flags li span em{font-style:normal;font-weight:700;color:var(--ink)}.flags li a{color:var(--ink);font-weight:600}
 .comps{width:100%;border-collapse:collapse;font-size:14px}
 .comps th,.comps td{text-align:left;padding:7px 8px 7px 0;border-bottom:1px solid var(--line)}
 .comps th{color:var(--mute);font-weight:600}.comps td:last-child,.comps th:last-child{text-align:right}
@@ -114,7 +114,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <div class="panel">
 <p class="addr" id="ad">Sample property</p>
 <p class="badge" id="bd">Sample numbers. Enter an address above or type your own.</p>
-<div id="vc" hidden style="border-left:6px solid var(--good);padding:2px 0 2px 14px;margin:0 0 18px"><small style="color:var(--mute)">Estimated home value (automated estimate, not an appraisal)</small><div id="vv" style="font:900 clamp(32px,6vw,46px) Archivo,sans-serif;letter-spacing:-.03em"></div><small id="vr" style="color:var(--mute)"></small></div>
+<div id="vc" hidden style="border-left:6px solid var(--good);padding:2px 0 2px 14px;margin:0 0 18px"><small style="color:var(--mute)">Estimated home value (blend of an automated value and comps, not an appraisal)</small><div id="vv" style="font:900 clamp(32px,6vw,46px) Archivo,sans-serif;letter-spacing:-.03em"></div><small id="vr" style="color:var(--mute)"></small></div>
 <div id="pd" class="pd" hidden style="margin:0 0 18px"><h3>Property details</h3><div class="facts" id="pf"></div><ul class="chips" id="pt"></ul><div class="pmap" id="pm"></div></div>
 <div class="ins">
 <div><label for="price">Purchase price ($)</label><input id="price" type="number" inputmode="decimal" value="185000"></div>
@@ -206,18 +206,19 @@ $("kv").innerHTML=mode==="flip"
 ?row("Purchase + buying costs",usd(v.price+buyC))+row("Repairs",usd(v.repairs))+row("Loan interest",usd(interest))+row("Taxes, insurance, other",usd(carry))+row("Selling costs",usd(sell))+row("Total cost",usd(total),"tot")+row("Estimated profit",usd(profit))+row("ROI on cash invested ("+usd(cash)+")",pct(roi))+row("Max offer (70% rule)",usd(maxOffer))
 :row("Rent after 5% vacancy",usd(egi)+"/yr")+row("Taxes, insurance, expenses","-"+usd(opex)+"/yr")+row("Net operating income",usd(noi)+"/yr","tot")+row("Cap rate on all-in cost",pct(cap))+row("Rent / all-in cost",pct(rule));
 var f=[];
-if(v.arv>0&&v.price>0){if(v.price>maxOffer)f.push(["bad","Price is "+usd(v.price-maxOffer)+" over the 70% rule max offer of "+usd(maxOffer)+"."]);else f.push(["ok","Price is within the 70% rule max offer."]);}
-if(v.arv>0&&v.repairs/v.arv>.2)f.push(["","Repairs are "+pct(v.repairs/v.arv)+" of renovated value. Get contractor bids."]);
-if(v.price>0&&v.arv/v.price>1.8)f.push(["","Renovated value is "+(v.arv/v.price).toFixed(1)+"x the price. Confirm with recent comps."]);
-if(allIn>0&&rule<.01)f.push(["","Rent is under 1% of all-in cost, so a rental may be thin."]);
-if(noi<0)f.push(["bad","Rent doesn't cover expenses."]);
-aiFlags.forEach(function(t){f.push(["",t])});
-f.push(["","Check title, liens, permits, flood zone and tax reassessment."]);
-$("flags").innerHTML=f.map(function(x){return '<li class="'+x[0]+'">'+esc(x[1])+'</li>'}).join("");
+var ad=function(c,t,p,w,h){f.push({c:c,t:t,p:p,w:w,h:h})};
+if(v.arv>0&&v.price>0){if(v.price>maxOffer)ad("bad","Price is above the 70% rule","Your price is "+usd(v.price-maxOffer)+" over the max offer of "+usd(maxOffer)+" (70% of renovated value minus repairs).","At this price the profit after repairs, financing, holding and selling costs is usually too thin to cover surprises.","Negotiate down, or re-check the renovated value and repair budget.");else ad("ok","Price is within the 70% rule","Your price is at or under the max offer of "+usd(maxOffer)+".","This leaves room for costs and surprises.","Still confirm the renovated value with your own comps.")}
+if(v.arv>0&&v.repairs/v.arv>.2)ad("warn","Repairs are a large share of value","Repairs are "+pct(v.repairs/v.arv)+" of the renovated value.","Big repair scopes tend to overrun, and structural, permit or hidden problems can double the budget.","Get at least two contractor bids and add a 10 to 20% cushion.");
+if(v.price>0&&v.arv/v.price>1.8)ad("warn","Renovated value looks high","The renovated value is "+(v.arv/v.price).toFixed(1)+"x your price.","A big jump is often caused by weak comps, and the whole profit depends on this number.","Confirm with recent sold comps of fully renovated homes nearby.");
+if(allIn>0&&rule<.01)ad("warn","Rent is thin for the cost","Monthly rent is under 1% of your all-in cost ("+usd(allIn)+").","Low rent relative to cost usually means weak cash flow after taxes, insurance and repairs.","Check active rentals nearby and run the Rental tab with real expenses.");
+if(noi<0)ad("bad","Rent doesn't cover expenses","Net operating income is "+usd(noi)+"/yr.","The property loses money every month before any loan payment.","Don't plan to hold it as a rental unless rent rises or costs fall.");
+aiFlags.forEach(function(x){if(x&&typeof x==="object")f.push({c:x.level||"n",t:x.title,p:x.problem,w:x.why,h:x.how,l:x.link,lt:x.linkText})});
+if(!aiFlags.length)ad("n","Title, liens, permits, flood zone and taxes","Not checked yet. Look up an address to see these items.","They can add large hidden costs or block a sale.","Run a lookup, then verify each with the county and a title company.");
+$("flags").innerHTML=f.map(function(x){var lk=x.l&&/^https:\/\//.test(x.l)?' <a target="_blank" rel="noopener" href="'+esc(x.l)+'">'+esc(x.lt||"Open")+'</a>':"";return '<li class="'+x.c+'"><b>'+esc(x.t)+'</b><span class="pr"><em>Problem:</em> '+esc(x.p)+'</span><span class="wy"><em>Why it matters:</em> '+esc(x.w)+'</span><span class="hw"><em>How to check:</em> '+esc(x.h)+lk+'</span></li>'}).join("");
 $("cw").hidden=!comps.length;
 $("cb").innerHTML=comps.map(function(c){return '<tr><td>'+esc(c.address)+'</td><td>'+esc(c.details)+'</td><td>'+esc(c.sold)+'</td><td>'+(isFinite(+c.price)?usd(+c.price):esc(c.price))+'</td></tr>'}).join("");
 if(v.price<=0){$("ring").setAttribute("stroke-dashoffset",351.9);$("sc").textContent="–";$("st").textContent="Add your numbers";$("st").style.color="var(--mute)";$("ss").textContent="Enter a purchase price and repair costs to see profit and ROI.";$("kv").innerHTML=""}
-last="PropX deal report\n"+($("ad").textContent)+"\n\n"+$("bd").textContent+"\n\nDeal score: "+s+"/100 ("+$("st").textContent+")\nEstimated profit: "+usd(profit)+"\nROI on cash invested: "+pct(roi)+"\nCash needed: "+usd(cash)+"\nMax offer (70% rule): "+usd(maxOffer)+"\n\nInputs\n"+ids.map(function(i){return i+": "+v[i]}).join("\n")+"\n\nRental\nNOI: "+usd(noi)+"/yr\nCap rate: "+pct(cap)+"\n\nComps\n"+(comps.map(function(c){return c.address+" | "+c.details+" | "+c.sold+" | "+c.price}).join("\n")||"none")+"\n\nCheck before you buy\n"+f.map(function(x){return "- "+x[1]}).join("\n")+"\n\nEstimates only. Not financial advice. Verify all figures.\n";
+last="PropX deal report\n"+($("ad").textContent)+"\n\n"+$("bd").textContent+"\n\nDeal score: "+s+"/100 ("+$("st").textContent+")\nEstimated profit: "+usd(profit)+"\nROI on cash invested: "+pct(roi)+"\nCash needed: "+usd(cash)+"\nMax offer (70% rule): "+usd(maxOffer)+"\n\nInputs\n"+ids.map(function(i){return i+": "+v[i]}).join("\n")+"\n\nRental\nNOI: "+usd(noi)+"/yr\nCap rate: "+pct(cap)+"\n\nComps\n"+(comps.map(function(c){return c.address+" | "+c.details+" | "+c.sold+" | "+c.price}).join("\n")||"none")+"\n\nCheck before you buy\n"+f.map(function(x){return "- "+x.t+". Problem: "+x.p+" Why it matters: "+x.w+" How to check: "+x.h}).join("\n")+"\n\nEstimates only. Not financial advice. Verify all figures.\n";
 }
 ids.forEach(function(i){$(i).addEventListener("input",calc)});
 function setMode(m){mode=m;$("t1").setAttribute("aria-selected",m==="flip");$("t2").setAttribute("aria-selected",m==="rental");calc()}
@@ -275,12 +276,12 @@ var r=await res.json();
 if(!res.ok)throw new Error(r.error||"Lookup failed");
 if(r.address)$("ad").textContent=r.address;
 showDetails(r.details,r.address||a,r.photo);
-if(r.value){$("vv").textContent=usd(r.value);var vt=(r.low&&r.high)?"Likely range "+usd(r.low)+" to "+usd(r.high)+". ":"";if(r.est)vt+="Comp check: median "+usd(r.est.psf)+"/sq ft across "+r.est.n+" sales implies "+usd(r.est.comp)+" ("+usd(r.est.low)+" to "+usd(r.est.high)+"). ";if(r.arv&&r.arv>r.value)vt+="Renovated value uses the upper comps: "+usd(r.arv)+".";$("vr").textContent=vt;$("vc").hidden=false}else{$("vc").hidden=true}
+if(r.value){$("vv").textContent=usd(r.value);var vt=[];if(r.low&&r.high)vt.push("Likely range "+usd(r.low)+" to "+usd(r.high)+".");if(r.est){vt.push("Confidence: "+r.est.conf+". RentCast automated value "+usd(r.rcValue||r.value)+"; size-adjusted comps imply "+usd(r.est.comp)+" ("+usd(r.est.low)+" to "+usd(r.est.high)+") from "+r.est.n+" sales at a median "+usd(r.est.psf)+"/sq ft.")}else{vt.push("Confidence: not cross-checked (too few comps).")}if(r.arv&&r.arv>r.value)vt.push("Renovated value uses the upper comps: "+usd(r.arv)+".");$("vr").textContent=vt.join("\n");$("vr").style.whiteSpace="pre-line";$("vc").style.borderLeftColor=r.est?(r.est.conf==="High"?"var(--good)":r.est.conf==="Medium"?"var(--warn)":"var(--bad)"):"var(--warn)";$("vc").hidden=false}else{$("vc").hidden=true}
 if(r.arv)$("arv").value=Math.round(r.arv);
 if(r.rent)$("rent").value=Math.round(r.rent);
 if(r.tax)$("tax").value=Math.round(r.tax);
 $("price").value="";$("repairs").value="";$("price").placeholder="Enter your price";$("repairs").placeholder="Enter repair cost";
-comps=r.comps||[];aiFlags=r.notes||[];
+comps=r.comps||[];aiFlags=r.checks||[];
 $("bd").textContent="Value, rent, taxes and comps come from RentCast. Purchase price, repairs and insurance are your own numbers, so enter them.";
 $("hint").textContent="Done. Enter your purchase price and repair costs.";
 calc();
