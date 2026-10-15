@@ -89,6 +89,9 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 .plinks a{color:var(--ink);font-weight:600}
 .pmap img.ph{width:100%;max-height:300px;object-fit:cover;border-radius:8px;margin-bottom:6px;background:var(--paper)}
 .pmap small{display:block;color:var(--mute);font-size:12px;margin-top:6px}
+#cd select,#wk textarea{width:100%;font:500 16px Archivo,sans-serif;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+.wl{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:8px;font-size:14px}
+.wl li{border-bottom:1px solid var(--line);padding-bottom:8px}.wl li b{display:block}.wl li>span{color:var(--mute)}.wl .tg{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:0 8px;margin:4px 6px 0 0;font-size:12px;color:var(--ink)}
 @media (max-width:520px){.facts{grid-template-columns:1fr 1fr}}
 </style>
 </head>
@@ -116,6 +119,8 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <p class="badge" id="bd">Sample numbers. Enter an address above or type your own.</p>
 <div id="vc" hidden style="border-left:6px solid var(--good);padding:2px 0 2px 14px;margin:0 0 18px"><small style="color:var(--mute)">Estimated home value (blend of an automated value and comps, not an appraisal)</small><div id="vv" style="font:900 clamp(32px,6vw,46px) Archivo,sans-serif;letter-spacing:-.03em"></div><small id="vr" style="color:var(--mute)"></small></div>
 <div id="pd" class="pd" hidden style="margin:0 0 18px"><h3>Property details</h3><div class="facts" id="pf"></div><ul class="chips" id="pt"></ul><div class="pmap" id="pm"></div></div>
+<div id="cd" hidden style="margin:0 0 18px"><label for="cond">Condition of the home</label><select id="cond"><option value="">Select the condition</option><option value="0">Needs full rehab</option><option value="1">Dated, needs updates</option><option value="2">Average, maintained</option><option value="3">Updated</option><option value="4">Fully renovated</option></select><p class="fine" id="cdo" aria-live="polite" style="margin:8px 0 0"></p></div>
+<div id="wk" hidden style="margin:0 0 18px"><h3>Work done on this house</h3><p class="fine" id="wkn" style="margin:0 0 8px"></p><ul class="wl" id="wkl"></ul><label for="wnote">Other work done or planned (from the seller, an inspection or the permit office)</label><textarea id="wnote" rows="3" placeholder="e.g. Roof replaced 2021, new HVAC 2022, kitchen remodel 2023"></textarea></div>
 <div class="ins">
 <div><label for="price">Purchase price ($)</label><input id="price" type="number" inputmode="decimal" value="185000"></div>
 <div><label for="repairs">Repairs ($)</label><input id="repairs" type="number" inputmode="decimal" value="45000"></div>
@@ -182,7 +187,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 (function(){
 var $=function(i){return document.getElementById(i)};
 var ids=["price","repairs","arv","rent","tax","ins","other","months","ltv","rate","buyc","sellc"];
-var mode="flip",comps=[],aiFlags=[],last="";
+var mode="flip",comps=[],aiFlags=[],last="",lastWork="",lastEst=null,lastArv=0;
 var usd=function(n){return (n<0?"-$":"$")+Math.abs(Math.round(n)).toLocaleString("en-US")};
 var pct=function(n){return (isFinite(n)?(n*100).toFixed(1):"0.0")+"%"};
 var esc=function(s){var d=document.createElement("div");d.textContent=String(s==null?"":s);return d.innerHTML};
@@ -218,7 +223,7 @@ $("flags").innerHTML=f.map(function(x){var lk=x.l&&/^https:\/\//.test(x.l)?' <a 
 $("cw").hidden=!comps.length;
 $("cb").innerHTML=comps.map(function(c){return '<tr><td>'+esc(c.address)+'</td><td>'+esc(c.details)+'</td><td>'+esc(c.sold)+'</td><td>'+(isFinite(+c.price)?usd(+c.price):esc(c.price))+'</td></tr>'}).join("");
 if(v.price<=0){$("ring").setAttribute("stroke-dashoffset",351.9);$("sc").textContent="–";$("st").textContent="Add your numbers";$("st").style.color="var(--mute)";$("ss").textContent="Enter a purchase price and repair costs to see profit and ROI.";$("kv").innerHTML=""}
-last="PropX deal report\n"+($("ad").textContent)+"\n\n"+$("bd").textContent+"\n\nDeal score: "+s+"/100 ("+$("st").textContent+")\nEstimated profit: "+usd(profit)+"\nROI on cash invested: "+pct(roi)+"\nCash needed: "+usd(cash)+"\nMax offer (70% rule): "+usd(maxOffer)+"\n\nInputs\n"+ids.map(function(i){return i+": "+v[i]}).join("\n")+"\n\nRental\nNOI: "+usd(noi)+"/yr\nCap rate: "+pct(cap)+"\n\nComps\n"+(comps.map(function(c){return c.address+" | "+c.details+" | "+c.sold+" | "+c.price}).join("\n")||"none")+"\n\nCheck before you buy\n"+f.map(function(x){return "- "+x.t+". Problem: "+x.p+" Why it matters: "+x.w+" How to check: "+x.h}).join("\n")+"\n\nEstimates only. Not financial advice. Verify all figures.\n";
+last="PropX deal report\n"+($("ad").textContent)+"\n\n"+$("bd").textContent+"\n\nDeal score: "+s+"/100 ("+$("st").textContent+")\nEstimated profit: "+usd(profit)+"\nROI on cash invested: "+pct(roi)+"\nCash needed: "+usd(cash)+"\nMax offer (70% rule): "+usd(maxOffer)+"\n\nInputs\n"+ids.map(function(i){return i+": "+v[i]}).join("\n")+"\n\nRental\nNOI: "+usd(noi)+"/yr\nCap rate: "+pct(cap)+"\n\nComps\n"+(comps.map(function(c){return c.address+" | "+c.details+" | "+c.sold+" | "+c.price}).join("\n")||"none")+"\n\nCheck before you buy\n"+f.map(function(x){return "- "+x.t+". Problem: "+x.p+" Why it matters: "+x.w+" How to check: "+x.h}).join("\n")+"\n\nCondition: "+($("cond").value===""?"not selected":$("cond").options[$("cond").selectedIndex].text+". "+$("cdo").textContent)+"\n\nWork done on this house (permit records)\n"+(lastWork||"none loaded")+"\nOther work done or planned: "+($("wnote").value.trim()||"none entered")+"\n\nEstimates only. Not financial advice. Verify all figures.\n";
 }
 ids.forEach(function(i){$(i).addEventListener("input",calc)});
 function setMode(m){mode=m;$("t1").setAttribute("aria-selected",m==="flip");$("t2").setAttribute("aria-selected",m==="rental");calc()}
@@ -263,6 +268,23 @@ pm.innerHTML=html;
 if($("mf")){var pick=function(on){$("mt1").setAttribute("aria-selected",on===1);$("mt2").setAttribute("aria-selected",on===2);$("mf").src=on===1?satU:mapU;$("mf").title=on===1?"Aerial view of the property":"Map of the property"};$("mt1").onclick=function(){pick(1)};$("mt2").onclick=function(){pick(2)}}
 box.hidden=!(facts.length||chips.length||html);
 }
+function condText(){
+var s=$("cond").value;
+if(!lastEst){$("cdo").textContent="";return}
+if(s===""){$("cdo").textContent="Pick a condition to see where this home falls in the comp range.";return}
+var e=lastEst,vals=[e.low,Math.round((e.low+e.comp)/2),e.comp,Math.round((e.comp+e.high)/2),e.high],v=vals[+s];
+$("cdo").textContent="Estimated value in this condition: "+usd(v)+" (a position in the comp range, not an appraisal)."+(lastArv>v?" Gap to the renovated value of "+usd(lastArv)+": "+usd(lastArv-v)+". A repair budget well above this gap may not pay back.":"");
+}
+function setCond(est,arv){lastEst=est||null;lastArv=arv||0;$("cd").hidden=!lastEst;$("cond").value="";condText()}
+function showWork(p){
+var box=$("wk"),l=$("wkl"),n=$("wkn");box.hidden=false;l.innerHTML="";lastWork="";
+if(!p){n.textContent="Permit records for this city aren't connected yet. Use the permit search link in the checklist below, then type what you find in the box.";return}
+if(!p.items.length){n.textContent="No permits found at this address in "+p.city+"'s open permit data ("+p.range+"). That can mean no major work, work without a permit, or work before the data starts.";return}
+n.textContent="From "+p.city+" open permit records ("+p.range+"). Check that each job was finished and inspected.";
+l.innerHTML=p.items.map(function(i){return '<li><b>'+esc(i.date)+' · '+esc(i.type)+(i.cost?' · '+usd(i.cost):'')+'</b><span>'+esc(i.desc||"")+(i.status?' ('+esc(i.status)+')':'')+'</span>'+(i.tags&&i.tags.length?'<div>'+i.tags.map(function(t){return '<span class="tg">'+esc(t)+'</span>'}).join("")+'</div>':'')+'</li>'}).join("");
+lastWork=p.items.map(function(i){return "- "+i.date+" "+i.type+(i.cost?" "+usd(i.cost):"")+(i.desc?": "+i.desc:"")}).join("\n");
+}
+$("cond").onchange=function(){condText();calc()};$("wnote").addEventListener("input",calc);
 $("go").addEventListener("submit",async function(e){
 e.preventDefault();
 var a=$("addr").value.trim();
@@ -275,7 +297,7 @@ var res=await fetch("/api/check?address="+encodeURIComponent(a));
 var r=await res.json();
 if(!res.ok)throw new Error(r.error||"Lookup failed");
 if(r.address)$("ad").textContent=r.address;
-showDetails(r.details,r.address||a,r.photo);
+showDetails(r.details,r.address||a,r.photo);showWork(r.permits);setCond(r.est,r.arv);
 if(r.value){$("vv").textContent=usd(r.value);var vt=[];if(r.low&&r.high)vt.push("Likely range "+usd(r.low)+" to "+usd(r.high)+".");if(r.est){vt.push("Confidence: "+r.est.conf+". RentCast automated value "+usd(r.rcValue||r.value)+"; size-adjusted comps imply "+usd(r.est.comp)+" ("+usd(r.est.low)+" to "+usd(r.est.high)+") from "+r.est.n+" sales at a median "+usd(r.est.psf)+"/sq ft.")}else{vt.push("Confidence: not cross-checked (too few comps).")}if(r.arv&&r.arv>r.value)vt.push("Renovated value uses the upper comps: "+usd(r.arv)+".");$("vr").textContent=vt.join("\n");$("vr").style.whiteSpace="pre-line";$("vc").style.borderLeftColor=r.est?(r.est.conf==="High"?"var(--good)":r.est.conf==="Medium"?"var(--warn)":"var(--bad)"):"var(--warn)";$("vc").hidden=false}else{$("vc").hidden=true}
 if(r.arv)$("arv").value=Math.round(r.arv);
 if(r.rent)$("rent").value=Math.round(r.rent);
@@ -285,12 +307,12 @@ comps=r.comps||[];aiFlags=r.checks||[];
 $("bd").textContent="Value, rent, taxes and comps come from RentCast. Purchase price, repairs and insurance are your own numbers, so enter them.";
 $("hint").textContent="Done. Enter your purchase price and repair costs.";
 calc();
-}catch(err){$("vc").hidden=true;$("pd").hidden=true;$("hint").textContent=err.message||"Couldn't get data. Enter your own numbers below."}
+}catch(err){$("vc").hidden=true;$("pd").hidden=true;$("wk").hidden=true;$("cd").hidden=true;$("hint").textContent=err.message||"Couldn't get data. Enter your own numbers below."}
 finally{$("gob").disabled=false;$("gob").textContent="Check this property"}
 });
 
 $("dl").onclick=async function(){
-var d=null;try{d=await claude.use("downloads")}catch(x){}
+calc();var d=null;try{d=await claude.use("downloads")}catch(x){}
 if(!d){var b=new Blob([last],{type:"text/plain"});var u=URL.createObjectURL(b);window.open(u);return}
 try{await d.save({filename:"propx-report.txt",data:last})}catch(e){}
 };
