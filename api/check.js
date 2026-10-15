@@ -97,19 +97,48 @@ module.exports = async (req, res) => {
     ownerOccupied: p ? p.ownerOccupied : undefined,
     lat: pick(p && p.latitude, sp.latitude), lon: pick(p && p.longitude, sp.longitude),
   };
-  // Cross-check the automated value against the comparable sales (price per sq ft).
-  const psf = ((val && val.comparables) || []).filter((c) => c.price > 0 && c.squareFootage > 0).map((c) => c.price / c.squareFootage).sort((a, b) => a - b);
-  const qt = (a, t) => { const i = (a.length - 1) * t, lo = Math.floor(i), hi = Math.ceil(i); return a[lo] + (a[hi] - a[lo]) * (i - lo); };
-  let est = null;
-  const sf = Number(details.sqft);
-  if (psf.length >= 3 && sf > 0) {
-    est = { n: psf.length, psf: Math.round(qt(psf, 0.5)), comp: Math.round(qt(psf, 0.5) * sf), low: Math.round(qt(psf, 0.25) * sf), high: Math.round(qt(psf, 0.75) * sf) };
-  }
-  // Renovated value: what the better comps sold for, never below the as-is value.
+  const money = (n) => "$" + Math.round(n).toLocaleString("en-US");
   const asIs = val && val.price;
-  const arv = est ? Math.max(est.high, asIs || 0) : asIs;
 
-  // Optional street-level photo (free Mapillary token in MAPILLARY_TOKEN). Skipped if not set.
+  // ---- Cross-check the automated value against size-adjusted comparable sales ----
+  const subSf = Number(details.sqft), subBeds = Number(details.beds);
+  const wq = (arr, t) => {
+    const a = arr.slice().sort((x, y) => x.v - y.v);
+    const tot = a.reduce((s, x) => s + x.w, 0);
+    let acc = 0;
+    for (const x of a) { acc += x.w; if (acc >= tot * t) return x.v; }
+    return a[a.length - 1].v;
+  };
+  let est = null;
+  const allC = ((val && val.comparables) || []).filter((c) => c.price > 0 && c.squareFootage > 0);
+  if (subSf > 0 && allC.length >= 3) {
+    let use = allC.filter((c) => Math.abs(c.squareFootage - subSf) / subSf <= 0.35 && (!subBeds || c.bedrooms == null || Math.abs(c.bedrooms - subBeds) <= 1));
+    if (use.length < 3) use = allC;
+    const rows = use.map((c) => ({
+      v: 0.5 * c.price + 0.5 * (c.price / c.squareFootage) * subSf, // partial size adjustment
+      w: Math.max(c.correlation || 0.5, 0.1) / (1 + (c.daysOld || 0) / 180) / (1 + (c.distance || 0.5)),
+      psf: c.price / c.squareFootage,
+    }));
+    const med = wq(rows, 0.5), lo = wq(rows, 0.25), hi = wq(rows, 0.75);
+    const spread = (hi - lo) / med;
+    const gap = asIs ? Math.abs(med - asIs) / asIs : 0;
+    let conf = "Low";
+    if (rows.length >= 6 && spread < 0.15 && gap < 0.1) conf = "High";
+    else if (rows.length >= 4 && spread < 0.25 && gap < 0.2) conf = "Medium";
+    est = {
+      n: rows.length, psf: Math.round(wq(rows.map((r) => ({ v: r.psf, w: r.w })), 0.5)),
+      comp: Math.round(med), low: Math.round(lo), high: Math.round(hi),
+      spread: Math.round(spread * 100), gap: Math.round(gap * 100), conf,
+    };
+  }
+  const avg = (a, b) => (a && b ? Math.round((a + b) / 2) : a || b || null);
+  const best = est ? avg(asIs, est.comp) : asIs;
+  const bestLow = est ? avg(val && val.priceRangeLow, est.low) : val && val.priceRangeLow;
+  const bestHigh = est ? avg(val && val.priceRangeHigh, est.high) : val && val.priceRangeHigh;
+  // Renovated value: what the better comps sold for, never below the as-is value.
+  const arv = est ? Math.max(est.high, best || 0) : asIs;
+
+  // ---- Optional street-level photo (free Mapillary token in MAPILLARY_TOKEN) ----
   let photo = null;
   const mtok = (process.env.MAPILLARY_TOKEN || "").trim();
   const la = Number(details.lat), lo = Number(details.lon);
@@ -119,7 +148,7 @@ module.exports = async (req, res) => {
       const mr = await fetch("https://graph.mapillary.com/images?fields=id,thumb_1024_url,captured_at,compass_angle,geometry&limit=60&bbox=" + [lo - dx, la - dy, lo + dx, la + dy].join(",") + "&access_token=" + encodeURIComponent(mtok));
       if (mr.ok) {
         const mj = await mr.json();
-        let best = null;
+        let bestImg = null;
         (mj.data || []).forEach((im) => {
           if (!im.thumb_1024_url || !im.geometry || !im.geometry.coordinates) return;
           const [ix, iy] = im.geometry.coordinates;
@@ -129,25 +158,125 @@ module.exports = async (req, res) => {
           const diff = Math.abs((((im.compass_angle || 0) - bearing + 540) % 360) - 180);
           if (diff > 50 || dist < 5) return;
           const score = diff + dist * 0.5 - (im.captured_at || 0) / 1e11;
-          if (!best || score < best.score) best = { score, url: im.thumb_1024_url, at: im.captured_at };
+          if (!bestImg || score < bestImg.score) bestImg = { score, url: im.thumb_1024_url, at: im.captured_at };
         });
-        if (best) photo = { url: best.url, date: best.at ? new Date(best.at).toISOString().slice(0, 7) : "" };
+        if (bestImg) photo = { url: bestImg.url, date: bestImg.at ? new Date(bestImg.at).toISOString().slice(0, 7) : "" };
       }
     } catch (e) { /* photo is optional */ }
   }
-  const notes = [];
-  if (est && asIs && Math.abs(est.comp - asIs) / asIs > 0.1) notes.push("The automated value ($" + Math.round(asIs).toLocaleString("en-US") + ") and the comp-based value ($" + est.comp.toLocaleString("en-US") + ") differ by more than 10%. Check the comps and the home's condition before relying on either.");
-  if (p) {
-    if (p.yearBuilt) notes.push("Built in " + p.yearBuilt + ". Check roof, plumbing, electrical and HVAC age.");
-    if (p.lastSalePrice && p.lastSaleDate) notes.push("Last sold for $" + Number(p.lastSalePrice).toLocaleString("en-US") + " on " + String(p.lastSaleDate).slice(0, 10) + ".");
-    if (p.ownerOccupied === false) notes.push("Owner doesn't live there. Confirm who the seller is and if it is tenant-occupied.");
+
+  // ---- "Check before you buy": each item says the problem, why it matters, and how to check ----
+  const fullAddr = (p && p.formattedAddress) || (val && val.subjectProperty && val.subjectProperty.formattedAddress) || address;
+  const stM = /,\s*([A-Z]{2})\s+\d{5}/.exec(fullAddr);
+  const where = (details.county ? details.county + " County " : "") + (stM ? stM[1] + " " : "");
+  const gs = (t) => "https://www.google.com/search?q=" + encodeURIComponent(where + t);
+  const checks = [];
+  const add = (level, title, problem, why, how, link, linkText) => checks.push({ level, title, problem, why, how, link, linkText });
+
+  if (est) {
+    add(est.conf === "High" ? "ok" : est.conf === "Medium" ? "warn" : "bad",
+      "Value estimate: " + est.conf + " confidence",
+      "RentCast's automated value is " + money(asIs) + " and the size-adjusted comp value is " + money(est.comp) + " (" + est.gap + "% apart). The " + est.n + " comps range " + money(est.low) + " to " + money(est.high) + " (spread " + est.spread + "%).",
+      "Automated values can't see condition, upgrades or layout. A big gap or a wide spread means the data disagrees, so an offer built on one number could be wrong by tens of thousands.",
+      "Pull 3 to 5 sold homes within half a mile from the last 6 months that match this home's condition, and compare them to this estimate.");
+  } else if (asIs) {
+    add("warn", "Value estimate: not cross-checked",
+      "There were too few comparable sales with square footage to double-check the automated value of " + money(asIs) + ".",
+      "A single automated number has no second opinion, and it can't see condition or upgrades.",
+      "Pull recent sold comps yourself before relying on this value.");
   }
-  if (val && val.priceRangeLow && val.priceRangeHigh) notes.push("Value range from RentCast: $" + Math.round(val.priceRangeLow).toLocaleString("en-US") + " to $" + Math.round(val.priceRangeHigh).toLocaleString("en-US") + ". This is an as-is estimate, so confirm renovated value with your own comps.");
-  if (!tax) notes.push("No tax amount found. Look it up with the county.");
+
+  const yr = Number(details.year);
+  if (yr > 1800) {
+    const age = new Date().getFullYear() - yr;
+    const issues = [];
+    if (yr < 1978) issues.push("lead-based paint (banned in homes built after 1978)");
+    if (yr < 1981) issues.push("asbestos in flooring, ceiling texture or pipe wrap");
+    if (yr >= 1965 && yr <= 1973) issues.push("aluminum branch wiring, a fire risk that some insurers won't cover");
+    if (yr >= 1978 && yr <= 1995) issues.push("polybutylene water pipes, which are known to leak and fail");
+    if (yr < 1960) issues.push("old galvanized or cast-iron plumbing and outdated electrical");
+    if (yr < 1950) issues.push("possible knob-and-tube wiring");
+    if (yr >= 1950 && yr <= 1990) issues.push("older electrical panel brands with known failures (Federal Pacific, Zinsco)");
+    if (age >= 15 || issues.length) {
+      add(age >= 40 ? "bad" : "warn", "Age of the home and its systems",
+        "Built in " + yr + " (" + age + " years old)." + (issues.length ? " Homes from this era commonly have: " + issues.join("; ") + "." : "") + (age >= 15 ? " The roof, HVAC and water heater are likely at or near the end of their life. Rough US replacement costs: roof $8,000 to $20,000, HVAC $5,000 to $12,000, water heater $1,000 to $2,500." : ""),
+        "These problems are expensive, can be safety or insurance issues, and are often hidden until an inspection. They change your repair budget and your profit.",
+        "Order a full inspection with a sewer scope and an electrical review, ask for the seller disclosure, and get an insurance quote before you commit.");
+    }
+  }
+
+  const ls = p && Number(p.lastSalePrice), lsd = p && p.lastSaleDate && new Date(p.lastSaleDate);
+  if (ls > 0 && lsd && !isNaN(lsd) && best) {
+    const ch = (best - ls) / ls, months = (Date.now() - lsd.getTime()) / 2629800000;
+    add(months < 12 || ch > 0.5 || ch < -0.2 ? "warn" : "", "Sale history",
+      "Last sold for " + money(ls) + " in " + lsd.getUTCFullYear() + ". Today's estimate is " + money(best) + " (" + (ch >= 0 ? "+" : "") + Math.round(ch * 100) + "%)." + (months < 12 ? " That sale was under a year ago." : ""),
+      "A sale far below today's value can mean it sold as a distressed or foreclosure deal, or has been improved since. A very recent sale means someone may already have flipped it, so your margin could be thin.",
+      "Read the deed and listing history, and see whether any price jump came from permitted renovations.");
+  }
+
+  if (p && p.ownerOccupied === false) {
+    add("warn", "Owner doesn't live there",
+      "Records show the owner's mailing address is somewhere else, so it may be a rental, vacant or held by an investor.",
+      "A tenant in place can limit your access and timeline, and removing one can take weeks or months and cost money. A vacant home may have unseen damage.",
+      "Confirm who the seller is, whether it is tenant-occupied, and the lease terms before you make an offer.");
+  }
+
+  if (details.hoa) {
+    add("warn", "HOA fees and rules",
+      "An HOA fee of " + money(details.hoa) + "/month (" + money(details.hoa * 12) + "/year) is on record. This is not included in the default expenses.",
+      "HOA fees cut your cash flow. Unpaid dues can become a lien on the home, special assessments can be large, and some HOAs limit rentals.",
+      "Ask for the HOA's dues statement, any special assessments, and the rental and renovation rules.");
+  }
+
+  if (details.pool) {
+    add("warn", "Pool",
+      "The records show a pool.",
+      "Pools add repair risk (pump, liner, plaster can cost thousands), higher insurance and liability, and some buyers and insurers avoid them.",
+      "Have the pool inspected separately, and ask your insurer what it adds to the premium.");
+  }
+
+  if (tax && best) {
+    add("", "Property taxes may change after a sale",
+      "Current taxes are " + money(tax) + "/year, which is " + (tax / best * 100).toFixed(2) + "% of the estimated value.",
+      "Many counties reassess after a sale, so your bill can jump to match your purchase price. That reduces cash flow and profit.",
+      "Ask the county assessor how reassessment works, and estimate taxes using the local rate.", gs("property tax assessor reassessment after sale"), "Search the county assessor");
+  } else if (!tax) {
+    add("warn", "Property taxes not found",
+      "We couldn't find a tax amount for this address, so the taxes field is a placeholder.",
+      "Taxes are one of the largest ongoing costs. A wrong number changes your cash flow and profit.",
+      "Look up the actual tax bill with the county tax office.", gs("property tax lookup"), "Search the county tax office");
+  }
+
+  if (rent && rent.rent) {
+    const rl = rent.rentRangeLow, rh = rent.rentRangeHigh;
+    add("", "Rent estimate",
+      "Estimated rent is " + money(rent.rent) + "/month" + (rl && rh ? " (range " + money(rl) + " to " + money(rh) + ")" : "") + ".",
+      "Rent estimates don't see the home's condition or the local tenant market. The gap between the low and high end can swing your cash flow by hundreds a month.",
+      "Check 3 active rental listings nearby for similar bed, bath and size.");
+  }
+
+  add("bad", "Liens and title",
+    "Not in our data. Unpaid property taxes, HOA dues, contractor liens, court judgments and code fines can attach to the home.",
+    "Liens stay with the property, so the buyer can end up paying them, and they can block a clean sale or loan.",
+    "Order a title search before you close, and check the county recorder and tax office records.", gs("recorder of deeds property records search"), "Search county records");
+
+  add("warn", "Flood zone",
+    "Not in our data.",
+    "A home in a FEMA high-risk zone usually needs flood insurance, which can add thousands a year, and lenders require it. It also affects resale.",
+    "Look the address up on the FEMA flood map and get an insurance quote.", "https://msc.fema.gov/portal/search?AddressQuery=" + encodeURIComponent(fullAddr), "Open FEMA flood map");
+
+  add("warn", "Permits and zoning",
+    (details.zoning ? "Zoning on record: " + details.zoning + ". " : "") + "Permit history is not in our data.",
+    "Unpermitted additions or conversions can force a tear-out, fines or a blocked sale, and zoning limits rentals and added units.",
+    "Check the city or county permit history and confirm the zoning allows your plan.", gs("building permit records search"), "Search permit records");
+
+  const order = { bad: 0, warn: 1, "": 2, ok: 3 };
+  checks.sort((a, b) => order[a.level] - order[b.level]);
+
   res.setHeader("Cache-Control", "s-maxage=3600");
   res.status(200).json({
-    address: (p && p.formattedAddress) || (val && val.subjectProperty && val.subjectProperty.formattedAddress) || address,
-    value: val && val.price, low: val && val.priceRangeLow, high: val && val.priceRangeHigh,
-    arv, rent: rent && rent.rent, tax, comps, notes, details, est, photo,
+    address: fullAddr,
+    value: best, rcValue: asIs, low: bestLow, high: bestHigh,
+    arv, rent: rent && rent.rent, tax, comps, checks, details, est, photo,
   });
 };
