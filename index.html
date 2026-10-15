@@ -92,6 +92,9 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 #cd select,#wk textarea{width:100%;font:500 16px Archivo,sans-serif;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
 .wl{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:8px;font-size:14px}
 .wl li{border-bottom:1px solid var(--line);padding-bottom:8px}.wl li b{display:block}.wl li>span{color:var(--mute)}.wl .tg{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:0 8px;margin:4px 6px 0 0;font-size:12px;color:var(--ink)}
+.keyrow{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-top:10px;font-size:14px;color:var(--hm)}
+.keyrow label{margin:0;color:var(--hm)}.keyrow input{width:230px;max-width:100%;font:500 14px Archivo,sans-serif;padding:7px 10px;border:1px solid var(--hm);border-radius:6px;background:transparent;color:var(--hi)}
+.keyrow a{color:var(--brass);font-weight:600}
 @media (max-width:520px){.facts{grid-template-columns:1fr 1fr}}
 </style>
 </head>
@@ -103,6 +106,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <p>Enter an address. PropX estimates the price, comps, repairs, rent and expenses, then works out profit, ROI and what to investigate.</p>
 <form class="bar" id="go"><input id="addr" aria-label="Property address" placeholder="Enter a property address, e.g. 123 Maple St, Columbus, OH"><button class="btn" id="gob" type="submit">Check this property</button></form>
 <div class="hint" id="hint" aria-live="polite"></div>
+<div class="keyrow"><label for="key">Access key</label><input id="key" type="text" autocomplete="off" spellcheck="false" placeholder="px_…" aria-describedby="keyh"><span id="keyh">Subscribers get a key. <a href="#access">Request one</a>.</span></div>
 </header>
 </div></div>
 
@@ -289,13 +293,16 @@ $("go").addEventListener("submit",async function(e){
 e.preventDefault();
 var a=$("addr").value.trim();
 if(!a){$("hint").textContent="Enter a property address first.";return}
+var ak=$("key").value.trim();
+if(!ak){$("hint").textContent="Enter your access key first. Subscribers get one. Request access below.";$("key").focus();return}
 $("ad").textContent=a;
 $("report").scrollIntoView({behavior:"smooth"});
 $("gob").disabled=true;$("gob").textContent="Looking up…";$("hint").textContent="Pulling property data…";
 try{
-var res=await fetch("/api/check?address="+encodeURIComponent(a));
+var res=await fetch("/api/check?address="+encodeURIComponent(a),{headers:{"x-access-key":ak}});
 var r=await res.json();
-if(!res.ok)throw new Error(r.error||"Lookup failed");
+if(!res.ok){var er=new Error(r.error||"Lookup failed");er.needKey=r.needKey;throw er}
+try{localStorage.setItem("propxKey",ak)}catch(x){}
 if(r.address)$("ad").textContent=r.address;
 showDetails(r.details,r.address||a,r.photo);showWork(r.permits);setCond(r.est,r.arv);
 if(r.value){$("vv").textContent=usd(r.value);var vt=[];if(r.low&&r.high)vt.push("Likely range "+usd(r.low)+" to "+usd(r.high)+".");if(r.est){vt.push("Confidence: "+r.est.conf+". RentCast automated value "+usd(r.rcValue||r.value)+"; size-adjusted comps imply "+usd(r.est.comp)+" ("+usd(r.est.low)+" to "+usd(r.est.high)+") from "+r.est.n+" sales at a median "+usd(r.est.psf)+"/sq ft.")}else{vt.push("Confidence: not cross-checked (too few comps).")}if(r.arv&&r.arv>r.value)vt.push("Renovated value uses the upper comps: "+usd(r.arv)+".");$("vr").textContent=vt.join("\n");$("vr").style.whiteSpace="pre-line";$("vc").style.borderLeftColor=r.est?(r.est.conf==="High"?"var(--good)":r.est.conf==="Medium"?"var(--warn)":"var(--bad)"):"var(--warn)";$("vc").hidden=false}else{$("vc").hidden=true}
@@ -305,9 +312,9 @@ if(r.tax)$("tax").value=Math.round(r.tax);
 $("price").value="";$("repairs").value="";$("price").placeholder="Enter your price";$("repairs").placeholder="Enter repair cost";
 comps=r.comps||[];aiFlags=r.checks||[];
 $("bd").textContent="Value, rent, taxes and comps come from RentCast. Purchase price, repairs and insurance are your own numbers, so enter them.";
-$("hint").textContent="Done. Enter your purchase price and repair costs.";
+$("hint").textContent="Done. Enter your purchase price and repair costs."+(r.usage?" Searches used this month: "+r.usage.used+" of "+r.usage.limit+".":"");
 calc();
-}catch(err){$("vc").hidden=true;$("pd").hidden=true;$("wk").hidden=true;$("cd").hidden=true;$("hint").textContent=err.message||"Couldn't get data. Enter your own numbers below."}
+}catch(err){$("vc").hidden=true;$("pd").hidden=true;$("wk").hidden=true;$("cd").hidden=true;$("hint").textContent=err.message||"Couldn't get data. Enter your own numbers below.";if(err.needKey)$("key").focus()}
 finally{$("gob").disabled=false;$("gob").textContent="Check this property"}
 });
 
@@ -339,6 +346,7 @@ try{await db.collection("signups").add({email:em,at:Date.now()});m.textContent="
 catch(err){m.textContent="Couldn't save your signup. Try again in a moment."}
 finally{$("sb").disabled=false}
 });
+try{var sk=localStorage.getItem("propxKey");if(sk)$("key").value=sk}catch(x){}
 calc();initDb();
 })();
 </script>
