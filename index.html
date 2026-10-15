@@ -250,13 +250,16 @@ html+='<img class="ph" src="'+esc(photo.url)+'" alt="Street-level photo near the
 }
 if(isFinite(lat)&&isFinite(lon)&&lat&&lon){
 var bb=[lon-0.004,lat-0.003,lon+0.004,lat+0.003].map(function(x){return x.toFixed(5)}).join("%2C");
-html+='<iframe loading="lazy" title="Map of the property" src="https://www.openstreetmap.org/export/embed.html?bbox='+bb+'&layer=mapnik&marker='+lat.toFixed(5)+'%2C'+lon.toFixed(5)+'"></iframe>';
+var mapU='https://www.openstreetmap.org/export/embed.html?bbox='+bb+'&layer=mapnik&marker='+lat.toFixed(5)+'%2C'+lon.toFixed(5);
+var satU='https://maps.google.com/maps?q='+lat.toFixed(5)+'%2C'+lon.toFixed(5)+'&t=k&z=19&output=embed';
+html+='<div class="tabs" style="margin:0 0 8px"><button type="button" class="tab" id="mt1" aria-selected="true">Satellite</button><button type="button" class="tab" id="mt2" aria-selected="false">Map</button></div><iframe id="mf" loading="lazy" title="Aerial view of the property" src="'+satU+'"></iframe>';
 html+='<div class="plinks"><a target="_blank" rel="noopener" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+lat.toFixed(5)+'%2C'+lon.toFixed(5)+'">See street-level photos</a><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+q+'">Open in Google Maps</a></div>';
-html+='<small>Map data &copy; <a target="_blank" rel="noopener" href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors. Photos of the home are not included in this data.</small>';
+html+='<small>Satellite view by Google Maps. Map data &copy; <a target="_blank" rel="noopener" href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors. Photos of the home are not included in this data.</small>';
 }else if(q){
 html+='<div class="plinks"><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+q+'">Open in Google Maps</a></div>';
 }
 pm.innerHTML=html;
+if($("mf")){var pick=function(on){$("mt1").setAttribute("aria-selected",on===1);$("mt2").setAttribute("aria-selected",on===2);$("mf").src=on===1?satU:mapU;$("mf").title=on===1?"Aerial view of the property":"Map of the property"};$("mt1").onclick=function(){pick(1)};$("mt2").onclick=function(){pick(2)}}
 box.hidden=!(facts.length||chips.length||html);
 }
 $("go").addEventListener("submit",async function(e){
