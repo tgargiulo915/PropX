@@ -27,37 +27,45 @@ const jget = async (url) => {
   if (!r.ok) throw new Error("permit " + r.status);
   return r.json();
 };
+const LA_COMM = new Set(["los angeles", "van nuys", "sherman oaks", "north hollywood", "studio city", "encino", "tarzana", "woodland hills", "canoga park", "reseda", "northridge", "chatsworth", "granada hills", "sylmar", "sun valley", "pacoima", "arleta", "panorama city", "north hills", "winnetka", "west hills", "porter ranch", "lake view terrace", "tujunga", "sunland", "hollywood", "venice", "playa del rey", "san pedro", "wilmington", "harbor city", "pacific palisades", "mar vista", "west los angeles", "valley village", "mission hills", "toluca lake", "los feliz", "silver lake", "echo park", "highland park", "eagle rock", "boyle heights", "watts"]);
+function variants(a) {
+  return a.dir ? [a.num + " " + a.base] : [a.num + " " + a.base].concat(DIRS.map((d) => a.num + " " + d + " " + a.base));
+}
+const likeAny = (field, a) => "(" + variants(a).map((v) => "upper(" + field + ") like '" + v + " %'").join(" OR ") + ")";
 async function permitLookup(fullAddr) {
   try {
     const parts = String(fullAddr).split(",");
     const city = parts[1] ? parts[1].trim().toLowerCase() : "";
+    const zm = /,\s*([A-Z]{2})\s+(\d{5})/.exec(fullAddr);
+    const st = zm ? zm[1] : "", zip = zm ? zm[2] : "";
     const a = parseStreet(fullAddr);
     if (!a) return null;
-    const like = a.num + " " + a.base;
     const q = (o) => new URLSearchParams(o).toString();
     let rows = [], name = "", range = "recent years";
-    if (city === "san antonio") {
+    if (st === "TX" && city === "san antonio") {
       name = "San Antonio"; range = "2020 to present";
+      const where = variants(a).map((v) => "\"ADDRESS\" ILIKE '" + v + " %' OR \"ADDRESS\" ILIKE '" + v + ",%'").join(" OR ");
       const rids = ["c21106f9-3ef5-4f3a-8604-f992b4db7512", "c22b1ef2-dcf8-4d77-be1a-ee3638092aab"];
-      const out = await Promise.all(rids.map((rid) => jget("https://data.sanantonio.gov/api/3/action/datastore_search_sql?sql=" + encodeURIComponent("SELECT \"PERMIT TYPE\" AS t, \"WORK TYPE\" AS w, \"DATE ISSUED\" AS d, \"DECLARED VALUATION\" AS c FROM \"" + rid + "\" WHERE \"ADDRESS\" ILIKE '" + like + " %' OR \"ADDRESS\" ILIKE '" + like + ",%' ORDER BY \"DATE ISSUED\" DESC LIMIT 30")).catch(() => null)));
+      const out = await Promise.all(rids.map((rid) => jget("https://data.sanantonio.gov/api/3/action/datastore_search_sql?sql=" + encodeURIComponent("SELECT \"PERMIT TYPE\" AS t, \"WORK TYPE\" AS w, \"DATE ISSUED\" AS d, \"DECLARED VALUATION\" AS c FROM \"" + rid + "\" WHERE " + where + " ORDER BY \"DATE ISSUED\" DESC LIMIT 30")).catch(() => null)));
       out.forEach((j) => ((j && j.result && j.result.records) || []).forEach((r) => rows.push({ date: r.d, type: r.t, desc: r.w, cost: r.c, status: "Issued" })));
-    } else if (city === "chicago") {
+    } else if (st === "IL" && city === "chicago") {
       name = "Chicago";
       const where = "street_number='" + a.num + "' AND upper(street_name) like '" + a.nodir + " %'" + (a.dir ? " AND street_direction='" + a.dir + "'" : "") + " AND issue_date IS NOT NULL";
       const j = await jget("https://data.cityofchicago.org/resource/ydr8-5enu.json?" + q({ $where: where, $order: "issue_date DESC", $limit: "30" }));
       j.forEach((r) => rows.push({ date: r.issue_date, type: String(r.permit_type || "").replace(/^PERMIT\s*[–-]\s*/i, ""), desc: r.work_description || r.work_type, status: r.permit_status }));
-    } else if (city === "austin") {
+    } else if (st === "TX" && city === "austin") {
       name = "Austin";
-      const j = await jget("https://data.austintexas.gov/resource/3syk-w9eu.json?" + q({ $where: "upper(permit_location) like '" + like + " %' AND issue_date IS NOT NULL", $order: "issue_date DESC", $limit: "30" }));
+      const j = await jget("https://data.austintexas.gov/resource/3syk-w9eu.json?" + q({ $where: likeAny("permit_location", a) + " AND issue_date IS NOT NULL", $order: "issue_date DESC", $limit: "30" }));
       j.forEach((r) => rows.push({ date: r.issue_date, type: r.permit_type_desc, desc: (r.work_class ? r.work_class + ": " : "") + (r.description || ""), status: r.status_current }));
-    } else if (city === "seattle") {
+    } else if (st === "WA" && city === "seattle") {
       name = "Seattle";
-      const j = await jget("https://data.seattle.gov/resource/76t5-zqzr.json?" + q({ $where: "upper(originaladdress1) like '" + like + " %' AND issueddate IS NOT NULL", $order: "issueddate DESC", $limit: "30" }));
+      const j = await jget("https://data.seattle.gov/resource/76t5-zqzr.json?" + q({ $where: likeAny("originaladdress1", a) + " AND issueddate IS NOT NULL", $order: "issueddate DESC", $limit: "30" }));
       j.forEach((r) => rows.push({ date: r.issueddate, type: r.permittypedesc, desc: r.description, cost: r.estprojectcost, status: r.statuscurrent }));
-    } else if (city === "los angeles") {
+    } else if (st === "CA" && LA_COMM.has(city) && zip) {
       name = "Los Angeles"; range = "2020 to present";
-      const j = await jget("https://data.lacity.org/resource/pi9x-tg5x.json?" + q({ $where: "upper(primary_address) like '" + like + " %' AND issue_date IS NOT NULL", $order: "issue_date DESC", $limit: "30" }));
+      const j = await jget("https://data.lacity.org/resource/pi9x-tg5x.json?" + q({ $where: likeAny("primary_address", a) + " AND zip_code='" + zip + "' AND issue_date IS NOT NULL", $order: "issue_date DESC", $limit: "30" }));
       j.forEach((r) => rows.push({ date: r.issue_date, type: [r.permit_type, r.permit_sub_type].filter(Boolean).join(" / "), desc: r.work_desc, cost: r.valuation, status: r.status_desc }));
+      if (city !== "los angeles" && !j.length) return null;
     } else {
       return null;
     }
