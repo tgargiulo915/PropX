@@ -77,6 +77,18 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 @media (max-width:860px){.rep,.pain{grid-template-columns:1fr}.items{columns:2}.who{grid-template-columns:1fr 1fr}}
 @media (max-width:520px){.items{columns:1}.who{grid-template-columns:1fr}.bar{flex-direction:column}.ins{grid-template-columns:1fr 1fr}nav a.l{display:none}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.pd h3{margin:0 0 10px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;margin:0 0 12px}
+.fact{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.fact b{display:block;font:800 20px Archivo,sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.fact span{font-size:13px;color:var(--mute)}
+.chips{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;padding:0}
+.chips li{border:1px solid var(--line);border-radius:99px;padding:4px 12px;font-size:14px}
+.pmap iframe{width:100%;height:220px;border:0;border-radius:8px;background:var(--paper)}
+.plinks{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:8px;font-size:14px}
+.plinks a{color:var(--ink);font-weight:600}
+.pmap small{display:block;color:var(--mute);font-size:12px;margin-top:6px}
+@media (max-width:520px){.facts{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -102,6 +114,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <p class="addr" id="ad">Sample property</p>
 <p class="badge" id="bd">Sample numbers. Enter an address above or type your own.</p>
 <div id="vc" hidden style="border-left:6px solid var(--good);padding:2px 0 2px 14px;margin:0 0 18px"><small style="color:var(--mute)">Estimated home value (automated estimate, not an appraisal)</small><div id="vv" style="font:900 clamp(32px,6vw,46px) Archivo,sans-serif;letter-spacing:-.03em"></div><small id="vr" style="color:var(--mute)"></small></div>
+<div id="pd" class="pd" hidden style="margin:0 0 18px"><h3>Property details</h3><div class="facts" id="pf"></div><ul class="chips" id="pt"></ul><div class="pmap" id="pm"></div></div>
 <div class="ins">
 <div><label for="price">Purchase price ($)</label><input id="price" type="number" inputmode="decimal" value="185000"></div>
 <div><label for="repairs">Repairs ($)</label><input id="repairs" type="number" inputmode="decimal" value="45000"></div>
@@ -192,7 +205,7 @@ $("kv").innerHTML=mode==="flip"
 ?row("Purchase + buying costs",usd(v.price+buyC))+row("Repairs",usd(v.repairs))+row("Loan interest",usd(interest))+row("Taxes, insurance, other",usd(carry))+row("Selling costs",usd(sell))+row("Total cost",usd(total),"tot")+row("Estimated profit",usd(profit))+row("ROI on cash invested ("+usd(cash)+")",pct(roi))+row("Max offer (70% rule)",usd(maxOffer))
 :row("Rent after 5% vacancy",usd(egi)+"/yr")+row("Taxes, insurance, expenses","-"+usd(opex)+"/yr")+row("Net operating income",usd(noi)+"/yr","tot")+row("Cap rate on all-in cost",pct(cap))+row("Rent / all-in cost",pct(rule));
 var f=[];
-if(v.arv>0){if(v.price>maxOffer)f.push(["bad","Price is "+usd(v.price-maxOffer)+" over the 70% rule max offer of "+usd(maxOffer)+"."]);else f.push(["ok","Price is within the 70% rule max offer."]);}
+if(v.arv>0&&v.price>0){if(v.price>maxOffer)f.push(["bad","Price is "+usd(v.price-maxOffer)+" over the 70% rule max offer of "+usd(maxOffer)+"."]);else f.push(["ok","Price is within the 70% rule max offer."]);}
 if(v.arv>0&&v.repairs/v.arv>.2)f.push(["","Repairs are "+pct(v.repairs/v.arv)+" of renovated value. Get contractor bids."]);
 if(v.price>0&&v.arv/v.price>1.8)f.push(["","Renovated value is "+(v.arv/v.price).toFixed(1)+"x the price. Confirm with recent comps."]);
 if(allIn>0&&rule<.01)f.push(["","Rent is under 1% of all-in cost, so a rental may be thin."]);
@@ -202,12 +215,46 @@ f.push(["","Check title, liens, permits, flood zone and tax reassessment."]);
 $("flags").innerHTML=f.map(function(x){return '<li class="'+x[0]+'">'+esc(x[1])+'</li>'}).join("");
 $("cw").hidden=!comps.length;
 $("cb").innerHTML=comps.map(function(c){return '<tr><td>'+esc(c.address)+'</td><td>'+esc(c.details)+'</td><td>'+esc(c.sold)+'</td><td>'+(isFinite(+c.price)?usd(+c.price):esc(c.price))+'</td></tr>'}).join("");
+if(v.price<=0){$("ring").setAttribute("stroke-dashoffset",351.9);$("sc").textContent="–";$("st").textContent="Add your numbers";$("st").style.color="var(--mute)";$("ss").textContent="Enter a purchase price and repair costs to see profit and ROI.";$("kv").innerHTML=""}
 last="PropX deal report\n"+($("ad").textContent)+"\n\n"+$("bd").textContent+"\n\nDeal score: "+s+"/100 ("+$("st").textContent+")\nEstimated profit: "+usd(profit)+"\nROI on cash invested: "+pct(roi)+"\nCash needed: "+usd(cash)+"\nMax offer (70% rule): "+usd(maxOffer)+"\n\nInputs\n"+ids.map(function(i){return i+": "+v[i]}).join("\n")+"\n\nRental\nNOI: "+usd(noi)+"/yr\nCap rate: "+pct(cap)+"\n\nComps\n"+(comps.map(function(c){return c.address+" | "+c.details+" | "+c.sold+" | "+c.price}).join("\n")||"none")+"\n\nCheck before you buy\n"+f.map(function(x){return "- "+x[1]}).join("\n")+"\n\nEstimates only. Not financial advice. Verify all figures.\n";
 }
 ids.forEach(function(i){$(i).addEventListener("input",calc)});
 function setMode(m){mode=m;$("t1").setAttribute("aria-selected",m==="flip");$("t2").setAttribute("aria-selected",m==="rental");calc()}
 $("t1").onclick=function(){setMode("flip")};$("t2").onclick=function(){setMode("rental")};
 
+function showDetails(d,addr){
+var box=$("pd");if(!d){box.hidden=true;return}
+var n=function(x){return (x===null||x===undefined||x==="")?null:x};
+var num=function(x){var v=Number(x);return isFinite(v)&&v>0?v.toLocaleString("en-US"):null};
+var facts=[
+[n(d.beds),"Bedrooms"],[n(d.baths),"Bathrooms"],[num(d.sqft),"Sq ft"],
+[num(d.lot),"Lot size (sq ft)"],[n(d.year),"Year built"],[n(d.type),"Property type"],
+[n(d.stories),"Stories"],[d.hoa?("$"+num(d.hoa)+"/mo"):null,"HOA fee"],
+[d.lastSalePrice?("$"+num(d.lastSalePrice)+(d.lastSaleDate?" ("+String(d.lastSaleDate).slice(0,4)+")":"")):null,"Last sold"],
+[n(d.county),"County"],[n(d.zoning),"Zoning"],[n(d.subdivision),"Subdivision"]
+].filter(function(f){return f[0]!==null});
+$("pf").innerHTML=facts.map(function(f){return '<div class="fact"><b>'+esc(f[0])+'</b><span>'+esc(f[1])+'</span></div>'}).join("");
+var chips=[];
+if(d.garage)chips.push(d.garageSpaces?("Garage ("+d.garageSpaces+")"):"Garage");
+if(d.pool)chips.push("Pool");if(d.fireplace)chips.push("Fireplace");
+if(d.cooling)chips.push(d.coolingType?("Cooling: "+d.coolingType):"Cooling");
+if(d.heating)chips.push(d.heatingType?("Heating: "+d.heatingType):"Heating");
+if(d.roof)chips.push("Roof: "+d.roof);if(d.exterior)chips.push("Exterior: "+d.exterior);if(d.foundation)chips.push("Foundation: "+d.foundation);
+if(d.ownerOccupied===false)chips.push("Not owner-occupied");
+$("pt").innerHTML=chips.map(function(c){return '<li>'+esc(c)+'</li>'}).join("");
+var pm=$("pm"),lat=Number(d.lat),lon=Number(d.lon),html="";
+var q=encodeURIComponent(addr||"");
+if(isFinite(lat)&&isFinite(lon)&&lat&&lon){
+var bb=[lon-0.004,lat-0.003,lon+0.004,lat+0.003].map(function(x){return x.toFixed(5)}).join("%2C");
+html+='<iframe loading="lazy" title="Map of the property" src="https://www.openstreetmap.org/export/embed.html?bbox='+bb+'&layer=mapnik&marker='+lat.toFixed(5)+'%2C'+lon.toFixed(5)+'"></iframe>';
+html+='<div class="plinks"><a target="_blank" rel="noopener" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+lat.toFixed(5)+'%2C'+lon.toFixed(5)+'">See street-level photos</a><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+q+'">Open in Google Maps</a></div>';
+html+='<small>Map data &copy; <a target="_blank" rel="noopener" href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors. Photos of the home are not included in this data.</small>';
+}else if(q){
+html+='<div class="plinks"><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query='+q+'">Open in Google Maps</a></div>';
+}
+pm.innerHTML=html;
+box.hidden=!(facts.length||chips.length||html);
+}
 $("go").addEventListener("submit",async function(e){
 e.preventDefault();
 var a=$("addr").value.trim();
@@ -220,15 +267,17 @@ var res=await fetch("/api/check?address="+encodeURIComponent(a));
 var r=await res.json();
 if(!res.ok)throw new Error(r.error||"Lookup failed");
 if(r.address)$("ad").textContent=r.address;
+showDetails(r.details,r.address||a);
 if(r.value){$("vv").textContent=usd(r.value);$("vr").textContent=(r.low&&r.high)?"Likely range "+usd(r.low)+" to "+usd(r.high):"";$("vc").hidden=false}else{$("vc").hidden=true}
 if(r.arv)$("arv").value=Math.round(r.arv);
 if(r.rent)$("rent").value=Math.round(r.rent);
 if(r.tax)$("tax").value=Math.round(r.tax);
+$("price").value="";$("repairs").value="";$("price").placeholder="Enter your price";$("repairs").placeholder="Enter repair cost";
 comps=r.comps||[];aiFlags=r.notes||[];
 $("bd").textContent="Value, rent, taxes and comps come from RentCast. Purchase price, repairs and insurance are your own numbers, so enter them.";
 $("hint").textContent="Done. Enter your purchase price and repair costs.";
 calc();
-}catch(err){$("vc").hidden=true;$("hint").textContent=err.message||"Couldn't get data. Enter your own numbers below."}
+}catch(err){$("vc").hidden=true;$("pd").hidden=true;$("hint").textContent=err.message||"Couldn't get data. Enter your own numbers below."}
 finally{$("gob").disabled=false;$("gob").textContent="Check this property"}
 });
 
