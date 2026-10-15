@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
   };
   const [prop, val, rent] = await Promise.all([
     get("/properties?address=" + q),
-    get("/avm/value?address=" + q + "&compCount=5&lookupSubjectAttributes=true"),
+    get("/avm/value?address=" + q + "&compCount=10&lookupSubjectAttributes=true"),
     get("/avm/rent/long-term?address=" + q + "&lookupSubjectAttributes=true"),
   ]);
 
@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
     const last = years.length ? p.propertyTaxes[years[years.length - 1]] : null;
     if (last && last.total) tax = last.total;
   }
-  const comps = ((val && val.comparables) || []).slice(0, 4).map((c) => ({
+  const comps = ((val && val.comparables) || []).slice(0, 6).map((c) => ({
     address: c.formattedAddress || "",
     details: [c.bedrooms != null ? c.bedrooms + "bd" : "", c.bathrooms != null ? c.bathrooms + "ba" : "", c.squareFootage ? c.squareFootage + " sf" : ""].filter(Boolean).join(" "),
     sold: String(c.removedDate || c.listedDate || "").slice(0, 7),
@@ -97,7 +97,46 @@ module.exports = async (req, res) => {
     ownerOccupied: p ? p.ownerOccupied : undefined,
     lat: pick(p && p.latitude, sp.latitude), lon: pick(p && p.longitude, sp.longitude),
   };
+  // Cross-check the automated value against the comparable sales (price per sq ft).
+  const psf = ((val && val.comparables) || []).filter((c) => c.price > 0 && c.squareFootage > 0).map((c) => c.price / c.squareFootage).sort((a, b) => a - b);
+  const qt = (a, t) => { const i = (a.length - 1) * t, lo = Math.floor(i), hi = Math.ceil(i); return a[lo] + (a[hi] - a[lo]) * (i - lo); };
+  let est = null;
+  const sf = Number(details.sqft);
+  if (psf.length >= 3 && sf > 0) {
+    est = { n: psf.length, psf: Math.round(qt(psf, 0.5)), comp: Math.round(qt(psf, 0.5) * sf), low: Math.round(qt(psf, 0.25) * sf), high: Math.round(qt(psf, 0.75) * sf) };
+  }
+  // Renovated value: what the better comps sold for, never below the as-is value.
+  const asIs = val && val.price;
+  const arv = est ? Math.max(est.high, asIs || 0) : asIs;
+
+  // Optional street-level photo (free Mapillary token in MAPILLARY_TOKEN). Skipped if not set.
+  let photo = null;
+  const mtok = (process.env.MAPILLARY_TOKEN || "").trim();
+  const la = Number(details.lat), lo = Number(details.lon);
+  if (mtok && la && lo) {
+    try {
+      const dy = 0.0007, dx = dy / Math.cos((la * Math.PI) / 180);
+      const mr = await fetch("https://graph.mapillary.com/images?fields=id,thumb_1024_url,captured_at,compass_angle,geometry&limit=60&bbox=" + [lo - dx, la - dy, lo + dx, la + dy].join(",") + "&access_token=" + encodeURIComponent(mtok));
+      if (mr.ok) {
+        const mj = await mr.json();
+        let best = null;
+        (mj.data || []).forEach((im) => {
+          if (!im.thumb_1024_url || !im.geometry || !im.geometry.coordinates) return;
+          const [ix, iy] = im.geometry.coordinates;
+          const my = (la - iy) * 111320, mx = (lo - ix) * 111320 * Math.cos((la * Math.PI) / 180);
+          const dist = Math.hypot(mx, my);
+          const bearing = ((Math.atan2(mx, my) * 180) / Math.PI + 360) % 360;
+          const diff = Math.abs((((im.compass_angle || 0) - bearing + 540) % 360) - 180);
+          if (diff > 50 || dist < 5) return;
+          const score = diff + dist * 0.5 - (im.captured_at || 0) / 1e11;
+          if (!best || score < best.score) best = { score, url: im.thumb_1024_url, at: im.captured_at };
+        });
+        if (best) photo = { url: best.url, date: best.at ? new Date(best.at).toISOString().slice(0, 7) : "" };
+      }
+    } catch (e) { /* photo is optional */ }
+  }
   const notes = [];
+  if (est && asIs && Math.abs(est.comp - asIs) / asIs > 0.1) notes.push("The automated value ($" + Math.round(asIs).toLocaleString("en-US") + ") and the comp-based value ($" + est.comp.toLocaleString("en-US") + ") differ by more than 10%. Check the comps and the home's condition before relying on either.");
   if (p) {
     if (p.yearBuilt) notes.push("Built in " + p.yearBuilt + ". Check roof, plumbing, electrical and HVAC age.");
     if (p.lastSalePrice && p.lastSaleDate) notes.push("Last sold for $" + Number(p.lastSalePrice).toLocaleString("en-US") + " on " + String(p.lastSaleDate).slice(0, 10) + ".");
@@ -109,6 +148,6 @@ module.exports = async (req, res) => {
   res.status(200).json({
     address: (p && p.formattedAddress) || (val && val.subjectProperty && val.subjectProperty.formattedAddress) || address,
     value: val && val.price, low: val && val.priceRangeLow, high: val && val.priceRangeHigh,
-    arv: val && val.price, rent: rent && rent.rent, tax, comps, notes, details,
+    arv, rent: rent && rent.rent, tax, comps, notes, details, est, photo,
   });
 };
