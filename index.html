@@ -4,6 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PropX — Know the numbers before you buy.</title>
+<meta name="description" content="Enter any property address and get value, comps, repairs, rent, profit and what to check, in one report.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PropX">
+<meta property="og:title" content="PropX — Know the numbers before you buy.">
+<meta property="og:description" content="Enter any property address and get value, comps, repairs, rent, profit and what to check, in one report.">
+<meta property="og:image" content="https://propx-zeta.vercel.app/api/og">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://propx-zeta.vercel.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PropX — Know the numbers before you buy.">
+<meta name="twitter:description" content="Enter any property address and get value, comps, repairs, rent, profit and what to check, in one report.">
+<meta name="twitter:image" content="https://propx-zeta.vercel.app/api/og">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800;900&display=swap">
 <style>
 :root{--hero:#0B3B36;--hi:#EAF4F1;--hm:#9EC2BA;--brass:#E0A526;--paper:#F7F6F2;--card:#fff;--ink:#16211F;--mute:#5E6B68;--line:#DAD8CF;--good:#117A55;--warn:#B45309;--bad:#B42318;
@@ -346,7 +359,7 @@ try{await db.collection("signups").add({email:em,at:Date.now()});m.textContent="
 catch(err){m.textContent="Couldn't save your signup. Try again in a moment."}
 finally{$("sb").disabled=false}
 });
-try{var sk=localStorage.getItem("propxKey");if(sk)$("key").value=sk}catch(x){}
+try{var sk=localStorage.getItem("propxKey");var up=new URLSearchParams(location.search).get("key");if(up&&/^px_[a-f0-9]{24}$/.test(up)){sk=up;try{localStorage.setItem("propxKey",up)}catch(x){}history.replaceState(null,"",location.pathname);$("hint").textContent="Your access key is filled in. Enter a property address to run your search."}if(sk)$("key").value=sk}catch(x){}
 calc();initDb();
 })();
 </script>
