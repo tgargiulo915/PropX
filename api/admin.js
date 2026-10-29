@@ -1,5 +1,6 @@
 // Admin API for managing customer access keys. Needs ADMIN_SECRET (12+ characters) plus the Upstash env vars.
 const crypto = require("crypto");
+const PLANS = require("../lib/plans");
 const clean = (s) => String(s || "").trim().replace(/^[A-Za-z_]+\s*=\s*/, "").replace(/^["']+|["']+$/g, "").trim();
 function redisConf() {
   let u = clean(process.env.UPSTASH_REDIS_REST_URL);
@@ -60,10 +61,11 @@ module.exports = async (req, res) => {
       const customers = (keys || []).map((k, i) => {
         let c = {};
         try { c = JSON.parse(rows[i] || "{}"); } catch (e) { /* ignore */ }
-        return { key: k, name: c.name || "(unnamed)", limit: Number(c.limit) || 0, active: c.active !== false, used: Number(rows[len + i]) || 0, created: c.created || "" };
+        return { key: k, name: c.name || "(unnamed)", email: c.email || "", plan: c.plan || "", note: c.note || "", limit: Number(c.limit) || 0, active: c.active !== false, used: Number(rows[len + i]) || 0, created: c.created || "" };
       }).sort((a, b) => (a.created < b.created ? 1 : -1));
       const cap = parseInt(process.env.MONTHLY_REQUEST_LIMIT || "45", 10);
-      return res.status(200).json({ customers, month, rentcast: { used: Number(rows[len * 2]) || 0, limit: cap } });
+      const mrr = customers.reduce((s, c) => { const p = PLANS.find((x) => x.id === c.plan); return s + (c.active && p ? p.price : 0); }, 0);
+      return res.status(200).json({ customers, month, summary: { active: customers.filter((c) => c.active).length, total: customers.length, mrr }, rentcast: { used: Number(rows[len * 2]) || 0, limit: cap } });
     }
 
     if (action === "update") {
@@ -74,6 +76,7 @@ module.exports = async (req, res) => {
       const c = JSON.parse(raw);
       if (body.limit !== undefined) c.limit = Math.max(0, Math.min(100000, parseInt(body.limit, 10) || 0));
       if (body.active !== undefined) c.active = !!body.active;
+      if (body.note !== undefined) c.note = String(body.note).trim().slice(0, 200);
       if (body.name !== undefined) c.name = String(body.name).trim().slice(0, 80) || c.name;
       await pipe(conf, [["SET", "propx:cust:" + key, JSON.stringify(c)]]);
       return res.status(200).json({ ok: true });
