@@ -108,6 +108,10 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 .keyrow{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-top:10px;font-size:14px;color:var(--hm)}
 .keyrow label{margin:0;color:var(--hm)}.keyrow input{width:230px;max-width:100%;font:500 14px Archivo,sans-serif;padding:7px 10px;border:1px solid var(--hm);border-radius:6px;background:transparent;color:var(--hi)}
 .keyrow a{color:var(--brass);font-weight:600}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:8px}.plan{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:22px;display:flex;flex-direction:column;gap:10px}.plan.pop{border-color:var(--brass)}.plan h3{margin:0;font-size:20px}.plan .pr{font:900 40px Archivo,sans-serif;letter-spacing:-.03em}.plan .pr small{font:500 15px Archivo,sans-serif;color:var(--mute)}.plan ul{margin:0;padding-left:20px;font-size:15px;flex:1}.plan .tg{font-size:12px;font-weight:800;color:#2A1D00;background:var(--brass);border-radius:99px;padding:2px 10px;align-self:flex-start}.plan .btn{text-align:center}
+.faq details{border-bottom:1px solid var(--line);padding:14px 0}.faq summary{font-weight:700;cursor:pointer}.faq p{margin:8px 0 0;color:var(--mute)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}.acts .btn{padding:7px 14px;font-size:14px}.scn{font-size:14px;color:var(--mute);margin:0 0 12px}
+@media print{.top,nav,section:not(#report),.band,footer,.acts,.tabs,#go,#demo,#dl,.keyrow{display:none!important}#report{padding:0}body{background:#fff}}
 .recent{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;font-size:13px;color:var(--hm)}
 .recent button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:99px;padding:4px 12px;font:500 13px Archivo,sans-serif;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .recent button:hover{border-color:var(--brass)}
@@ -116,7 +120,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 </head>
 <body>
 <div class="top"><div class="wrap">
-<nav><a class="logo" href="#">Prop<b>X</b></a><div><a class="l" href="#report">Report</a><a class="l" href="#who">Who it's for</a><a class="l" href="#access">Early access</a></div></nav>
+<nav><a class="logo" href="#">Prop<b>X</b></a><div><a class="l" href="#report">Report</a><a class="l" href="#who">Who it's for</a><a class="l" href="#pricing">Pricing</a><a class="l" href="#faq">FAQ</a><a class="l" href="#access">Get access</a></div></nav>
 <header class="hero">
 <h1>Know the numbers before you buy.</h1>
 <p>Enter an address. PropX estimates the price, comps, repairs, rent and expenses, then works out profit, ROI and what to investigate.</p>
@@ -139,6 +143,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <div class="panel">
 <p class="addr" id="ad">Sample property</p>
 <p class="badge" id="bd">Sample numbers. Enter an address above or type your own.</p>
+<p style="margin:0 0 14px"><button class="btn line" id="demo" type="button" style="padding:7px 14px;font-size:14px">Load an example property</button> <small style="color:var(--mute)">Uses made-up example data and no searches.</small></p>
 <div id="vc" hidden style="border-left:6px solid var(--good);padding:2px 0 2px 14px;margin:0 0 18px"><small style="color:var(--mute)">Estimated home value (blend of an automated value and comps, not an appraisal)</small><div id="vv" style="font:900 clamp(32px,6vw,46px) Archivo,sans-serif;letter-spacing:-.03em"></div><small id="vr" style="color:var(--mute)"></small></div>
 <div id="pd" class="pd" hidden style="margin:0 0 18px"><h3>Property details</h3><div class="facts" id="pf"></div><ul class="chips" id="pt"></ul><div class="pmap" id="pm"></div></div>
 <div id="cd" hidden style="margin:0 0 18px"><label for="cond">Condition of the home</label><select id="cond"><option value="">Select the condition</option><option value="0">Needs full rehab</option><option value="1">Dated, needs updates</option><option value="2">Average, maintained</option><option value="3">Updated</option><option value="4">Fully renovated</option></select><p class="fine" id="cdo" aria-live="polite" style="margin:8px 0 0"></p></div>
@@ -156,8 +161,12 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <div><label for="rate">Interest rate (%)</label><input id="rate" type="number" inputmode="decimal" value="11"></div>
 <div><label for="buyc">Buying costs (%)</label><input id="buyc" type="number" inputmode="decimal" value="2"></div>
 <div><label for="sellc">Selling costs (%)</label><input id="sellc" type="number" inputmode="decimal" value="8"></div>
+<div id="fw" hidden><label for="fee">Your wholesale fee ($)</label><input id="fee" type="number" inputmode="decimal" value="10000"></div>
+<div id="fb" hidden><label for="refi">Refinance at (% of renovated value)</label><input id="refi" type="number" inputmode="decimal" value="75"></div>
 </div>
-<div class="tabs" role="tablist" style="margin-top:14px"><button class="tab" role="tab" id="t1" aria-selected="true">Flip</button><button class="tab" role="tab" id="t2" aria-selected="false">Rental</button></div>
+<div class="tabs" role="tablist" style="margin-top:14px"><button class="tab" role="tab" id="t1" aria-selected="true">Flip</button><button class="tab" role="tab" id="t2" aria-selected="false">Rental</button><button class="tab" role="tab" id="t3" aria-selected="false">Wholesale</button><button class="tab" role="tab" id="t4" aria-selected="false">BRRRR</button></div>
+<div class="acts"><button class="btn line" id="shr" type="button">Copy share link</button><button class="btn line" id="prt" type="button">Print or save PDF</button><button class="btn line" id="sva" type="button">Save as Scenario A</button></div>
+<p class="scn" id="scn" hidden></p>
 <dl class="kv" id="kv"></dl>
 <div id="cw" hidden><h3>Comparable sales</h3><div class="wide"><table class="comps"><thead><tr><th>Address</th><th>Details</th><th>Sold</th><th>Price</th></tr></thead><tbody id="cb"></tbody></table></div></div>
 <h3>Check before you buy</h3>
@@ -195,8 +204,26 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 </dl>
 </section>
 
+<section class="wrap" id="pricing">
+<h2>Simple plans.</h2>
+<p style="max-width:60ch;color:var(--mute)">Each plan comes with a personal access key and a monthly number of property searches. One search is one address lookup. Pick a plan and your key is ready as soon as you pay.</p>
+<div class="plans" id="plans"><p>Loading plans…</p></div>
+<noscript><p>Turn on JavaScript to see plans, or request access below.</p></noscript>
+</section>
+
+<section class="wrap faq" id="faq" style="padding-top:0">
+<h2>Questions.</h2>
+<details><summary>What counts as a search?</summary><p>One address lookup. It pulls the value, comps, rent, taxes and flags together. Changing your numbers afterwards is free and unlimited.</p></details>
+<details><summary>Where does the data come from?</summary><p>Property data comes from RentCast, plus public sources such as local permit records where they are available. Everything is an automated estimate.</p></details>
+<details><summary>How accurate is it?</summary><p>It is a starting point, not an appraisal. Values, rents and comps can be wrong or out of date, so verify them before you make an offer. See the <a href="/terms.html">terms</a>.</p></details>
+<details><summary>Can I try it first?</summary><p>Yes. Use "Load an example property" in the report above. It shows a full example with made-up data and uses no searches.</p></details>
+<details><summary>Does it work for wholesaling and rentals?</summary><p>Yes. The report has Flip, Rental, Wholesale and BRRRR views that use the same numbers.</p></details>
+<details><summary>When do searches reset?</summary><p>On the first of each month. Unused searches do not roll over.</p></details>
+<details><summary>How do I cancel?</summary><p>Plans are monthly and you can cancel any time. Access ends when the period you paid for ends.</p></details>
+</section>
+
 <div class="band"><section class="wrap" id="access">
-<h2>Get early access.</h2>
+<h2>Request access.</h2>
 <form class="em" id="sf"><div style="flex:1;min-width:220px"><label for="email" style="color:var(--hm)">Email address</label><input id="email" type="email" required placeholder="you@example.com"></div><button class="btn" id="sb" type="submit" style="align-self:flex-end">Request access</button></form>
 <div class="msg" id="sm" aria-live="polite"></div>
 <div class="list" id="sl" hidden></div>
@@ -209,8 +236,8 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)};
-var ids=["price","repairs","arv","rent","tax","ins","other","months","ltv","rate","buyc","sellc"];
-var mode="flip",comps=[],aiFlags=[],last="",lastWork="",lastEst=null,lastArv=0;
+var ids=["price","repairs","arv","rent","tax","ins","other","months","ltv","rate","buyc","sellc","fee","refi"];
+var curSum="",scnA="",mode="flip",comps=[],aiFlags=[],last="",lastWork="",lastEst=null,lastArv=0;
 var usd=function(n){return (n<0?"-$":"$")+Math.abs(Math.round(n)).toLocaleString("en-US")};
 var pct=function(n){return (isFinite(n)?(n*100).toFixed(1):"0.0")+"%"};
 var esc=function(s){var d=document.createElement("div");d.textContent=String(s==null?"":s);return d.innerHTML};
@@ -224,15 +251,29 @@ var cash=v.price-loan+v.repairs+buyC+interest+carry,roi=cash>0?profit/cash:0,mar
 var maxOffer=v.arv*.7-v.repairs;
 var egi=v.rent*12*.95,opex=v.tax+v.ins+v.other*12,noi=egi-opex,allIn=v.price+v.repairs+buyC;
 var cap=allIn>0?noi/allIn:0,rule=allIn>0?v.rent/allIn:0;
-var s=Math.max(0,Math.min(100,Math.round(margin/.2*100)));
-var col=s>=70?"var(--good)":s>=40?"var(--warn)":"var(--bad)";
+var pmt=function(L,r){var i=r/1200,n=360;return L<=0?0:(i>0?L*i/(1-Math.pow(1+i,-n)):L/n)};
+var clamp=function(x){return Math.max(0,Math.min(100,Math.round(x)))};
+var s,vd,sm,kv,cl=function(x){return x>=70?"var(--good)":x>=40?"var(--warn)":"var(--bad)"};
+if(mode==="rental"){
+var debtR=pmt(loan,v.rate)*12,cashR=allIn-loan,cfR=noi-debtR,cocR=cashR>0?cfR/cashR:0,dscr=debtR>0?noi/debtR:0;
+s=noi<0?0:clamp(cocR/.12*100);vd=s>=70?"Strong rental":s>=40?"Thin cash flow":"Weak rental";sm=usd(cfR)+"/yr cash flow, "+pct(cocR)+" cash-on-cash";
+kv=row("Rent after 5% vacancy",usd(egi)+"/yr")+row("Taxes, insurance, expenses","-"+usd(opex)+"/yr")+row("Net operating income",usd(noi)+"/yr","tot")+row("Loan payment (30 yr, "+v.rate+"%)","-"+usd(debtR)+"/yr")+row("Cash flow after loan",usd(cfR)+"/yr","tot")+row("Cash invested",usd(cashR))+row("Cash-on-cash return",pct(cocR))+row("Cap rate on all-in cost",pct(cap))+row("Debt service coverage",dscr.toFixed(2)+"x")+row("Rent / all-in cost",pct(rule));
+}else if(mode==="wholesale"){
+var maxB=v.arv*.7-v.repairs,myMax=maxB-v.fee,spread=maxB-v.price;
+s=v.fee>0?clamp(spread/v.fee*100):0;vd=s>=100?"Fee fits":s>=50?"Tight spread":"No room";sm="Spread "+usd(spread)+" vs "+usd(v.fee)+" fee target";
+kv=row("Renovated value",usd(v.arv))+row("Repairs",usd(v.repairs))+row("End buyer max price (70% rule)",usd(maxB))+row("Your fee target",usd(v.fee))+row("Max you can offer the seller",usd(myMax),"tot")+row("Your price",usd(v.price))+row("Spread at your price",usd(spread));
+}else if(mode==="brrrr"){
+var allInC=v.price+v.repairs+buyC+interest+carry,refiL=v.arv*v.refi/100,left=allInC-refiL,debtB=pmt(refiL,v.rate)*12,cfB=noi-debtB;
+s=cash>0?clamp((refiL-loan)/cash*100):0;vd=s>=100?"All cash back":s>=60?"Most cash back":"Cash stays in";sm=usd(Math.max(0,left))+" left in the deal, "+usd(cfB/12)+"/mo cash flow";
+kv=row("All-in cost with holding",usd(allInC))+row("Refinance loan ("+v.refi+"% of renovated value)",usd(refiL))+row("Cash left in the deal",left>0?usd(left):"None, all cash back","tot")+row("Loan payment after refinance","-"+usd(debtB)+"/yr")+row("Net operating income",usd(noi)+"/yr")+row("Cash flow after refinance",usd(cfB)+"/yr","tot")+row("Cash-on-cash after refinance",left>0?pct(cfB/left):(cfB>0?"No cash left in":"0.0%"));
+}else{
+s=clamp(margin/.2*100);vd=s>=70?"Strong flip":s>=40?"Thin margin":"Weak flip";sm=usd(profit)+" profit, "+pct(roi)+" ROI";
+kv=row("Purchase + buying costs",usd(v.price+buyC))+row("Repairs",usd(v.repairs))+row("Loan interest",usd(interest))+row("Taxes, insurance, other",usd(carry))+row("Selling costs",usd(sell))+row("Total cost",usd(total),"tot")+row("Estimated profit",usd(profit))+row("ROI on cash invested ("+usd(cash)+")",pct(roi))+row("Max offer (70% rule)",usd(maxOffer));
+}
+var col=cl(s);
 $("ring").style.stroke=col;$("ring").setAttribute("stroke-dashoffset",351.9*(1-s/100));
-$("sc").textContent=s;
-$("st").textContent=s>=70?"Strong flip":s>=40?"Thin margin":"Weak flip";$("st").style.color=col;
-$("ss").textContent=usd(profit)+" profit, "+pct(roi)+" ROI";
-$("kv").innerHTML=mode==="flip"
-?row("Purchase + buying costs",usd(v.price+buyC))+row("Repairs",usd(v.repairs))+row("Loan interest",usd(interest))+row("Taxes, insurance, other",usd(carry))+row("Selling costs",usd(sell))+row("Total cost",usd(total),"tot")+row("Estimated profit",usd(profit))+row("ROI on cash invested ("+usd(cash)+")",pct(roi))+row("Max offer (70% rule)",usd(maxOffer))
-:row("Rent after 5% vacancy",usd(egi)+"/yr")+row("Taxes, insurance, expenses","-"+usd(opex)+"/yr")+row("Net operating income",usd(noi)+"/yr","tot")+row("Cap rate on all-in cost",pct(cap))+row("Rent / all-in cost",pct(rule));
+$("sc").textContent=s;$("st").textContent=vd;$("st").style.color=col;$("ss").textContent=sm;$("kv").innerHTML=kv;
+curSum=vd+" ("+s+"/100): "+sm;
 var f=[];
 var ad=function(c,t,p,w,h){f.push({c:c,t:t,p:p,w:w,h:h})};
 if(v.arv>0&&v.price>0){if(v.price>maxOffer)ad("bad","Price is above the 70% rule","Your price is "+usd(v.price-maxOffer)+" over the max offer of "+usd(maxOffer)+" (70% of renovated value minus repairs).","At this price the profit after repairs, financing, holding and selling costs is usually too thin to cover surprises.","Negotiate down, or re-check the renovated value and repair budget.");else ad("ok","Price is within the 70% rule","Your price is at or under the max offer of "+usd(maxOffer)+".","This leaves room for costs and surprises.","Still confirm the renovated value with your own comps.")}
@@ -245,12 +286,32 @@ if(!aiFlags.length)ad("n","Title, liens, permits, flood zone and taxes","Not che
 $("flags").innerHTML=f.map(function(x){var lk=x.l&&/^https:\/\//.test(x.l)?' <a target="_blank" rel="noopener" href="'+esc(x.l)+'">'+esc(x.lt||"Open")+'</a>':"";return '<li class="'+x.c+'"><b>'+esc(x.t)+'</b><span class="pr"><em>Problem:</em> '+esc(x.p)+'</span><span class="wy"><em>Why it matters:</em> '+esc(x.w)+'</span><span class="hw"><em>How to check:</em> '+esc(x.h)+lk+'</span></li>'}).join("");
 $("cw").hidden=!comps.length;
 $("cb").innerHTML=comps.map(function(c){return '<tr><td>'+esc(c.address)+'</td><td>'+esc(c.details)+'</td><td>'+esc(c.sold)+'</td><td>'+(isFinite(+c.price)?usd(+c.price):esc(c.price))+'</td></tr>'}).join("");
+var scE=$("scn");if(scnA){scE.hidden=false;scE.textContent="Scenario A: "+scnA+"  |  This one: "+curSum}else scE.hidden=true;
 if(v.price<=0){$("ring").setAttribute("stroke-dashoffset",351.9);$("sc").textContent="–";$("st").textContent="Add your numbers";$("st").style.color="var(--mute)";$("ss").textContent="Enter a purchase price and repair costs to see profit and ROI.";$("kv").innerHTML=""}
 last="PropX deal report\n"+($("ad").textContent)+"\n\n"+$("bd").textContent+"\n\nDeal score: "+s+"/100 ("+$("st").textContent+")\nEstimated profit: "+usd(profit)+"\nROI on cash invested: "+pct(roi)+"\nCash needed: "+usd(cash)+"\nMax offer (70% rule): "+usd(maxOffer)+"\n\nInputs\n"+ids.map(function(i){return i+": "+v[i]}).join("\n")+"\n\nRental\nNOI: "+usd(noi)+"/yr\nCap rate: "+pct(cap)+"\n\nComps\n"+(comps.map(function(c){return c.address+" | "+c.details+" | "+c.sold+" | "+c.price}).join("\n")||"none")+"\n\nCheck before you buy\n"+f.map(function(x){return "- "+x.t+". Problem: "+x.p+" Why it matters: "+x.w+" How to check: "+x.h}).join("\n")+"\n\nCondition: "+($("cond").value===""?"not selected":$("cond").options[$("cond").selectedIndex].text+". "+$("cdo").textContent)+"\n\nWork done on this house (permit records)\n"+(lastWork||"none loaded")+"\nOther work done or planned: "+($("wnote").value.trim()||"none entered")+"\n\nEstimates only. Not financial advice. Verify all figures.\n";
 }
 ids.forEach(function(i){$(i).addEventListener("input",calc)});
-function setMode(m){mode=m;$("t1").setAttribute("aria-selected",m==="flip");$("t2").setAttribute("aria-selected",m==="rental");calc()}
-$("t1").onclick=function(){setMode("flip")};$("t2").onclick=function(){setMode("rental")};
+function setMode(m){mode=m;[["t1","flip"],["t2","rental"],["t3","wholesale"],["t4","brrrr"]].forEach(function(p){$(p[0]).setAttribute("aria-selected",m===p[1])});$("fw").hidden=m!=="wholesale";$("fb").hidden=m!=="brrrr";calc()}
+$("t1").onclick=function(){setMode("flip")};$("t2").onclick=function(){setMode("rental")};$("t3").onclick=function(){setMode("wholesale")};$("t4").onclick=function(){setMode("brrrr")};
+$("sva").onclick=function(){calc();scnA=curSum;calc()};
+$("prt").onclick=function(){calc();window.print()};
+$("shr").onclick=function(){calc();var st={m:mode,a:$("ad").textContent,v:{}};ids.forEach(function(i){st.v[i]=$(i).value});var u=location.origin+"/#d="+btoa(unescape(encodeURIComponent(JSON.stringify(st))));
+var done=function(){$("hint").textContent="Share link copied. It holds your numbers only, never your access key."};
+try{navigator.clipboard.writeText(u).then(done,function(){window.prompt("Copy this link:",u)})}catch(x){window.prompt("Copy this link:",u)}};
+function loadShared(){try{var m=location.hash.match(/^#d=([A-Za-z0-9+/=]+)$/);if(!m)return;var st=JSON.parse(decodeURIComponent(escape(atob(m[1]))));if(!st||typeof st.v!=="object")return;
+ids.forEach(function(i){if(st.v[i]!==undefined&&isFinite(parseFloat(st.v[i])))$(i).value=parseFloat(st.v[i])});
+if(typeof st.a==="string")$("ad").textContent=st.a.slice(0,200);
+if(["flip","rental","wholesale","brrrr"].indexOf(st.m)>=0)setMode(st.m);
+$("bd").textContent="Shared deal. These are the sender's numbers, so check them against your own.";$("report").scrollIntoView()}catch(x){}}
+$("demo").onclick=function(){
+var d={price:168000,repairs:38000,arv:312000,rent:2150,tax:3400,ins:1500,other:150,months:6,ltv:80,rate:11,buyc:2,sellc:8};
+Object.keys(d).forEach(function(k){$(k).value=d[k]});
+$("ad").textContent="Example: 1428 Maple Street, Columbus, OH 43201 (made-up sample, not a real property)";
+$("bd").textContent="Example data only. Look up a real address with your access key to see real numbers.";
+$("vc").hidden=false;$("vv").textContent=usd(298000);$("vr").textContent="Example range "+usd(281000)+" to "+usd(316000)+". Not real data.";
+comps=[{address:"1410 Maple St",details:"3 bd, 2 ba, 1,520 sq ft",sold:"Aug 2026",price:309000},{address:"1502 Elm Ave",details:"3 bd, 2 ba, 1,610 sq ft",sold:"Jul 2026",price:318500},{address:"1377 Oak Ln",details:"3 bd, 1.5 ba, 1,480 sq ft",sold:"Jun 2026",price:301000}];
+aiFlags=[{level:"warn",title:"Repairs are a large share of value",problem:"Repairs are 12.2% of the renovated value in this example.",why:"Scopes this size often run over budget once walls are opened.",how:"Get two contractor bids and add a 10 to 20% cushion."},{level:"n",title:"Permits and liens",problem:"Example only. A real report checks what it can for your address.",why:"Unpermitted work or liens can block a sale.",how:"Confirm with the county and a title company."}];
+setMode("flip");$("report").scrollIntoView({behavior:"smooth"})};
 
 function showDetails(d,addr,photo){
 var box=$("pd");if(!d){box.hidden=true;return}
@@ -363,15 +424,19 @@ el.textContent="Signups (only you can see this): "+(snap.docs.length?snap.docs.m
 $("sf").addEventListener("submit",async function(e){
 e.preventDefault();
 var em=$("email").value.trim(),m=$("sm");
-if(!db)await initDb();
-if(!db){m.innerHTML='Signups aren\'t available in this view. <a style="color:var(--brass)" href="mailto:hello@propx.ai?subject=PropX%20early%20access&body='+encodeURIComponent(em)+'">Email us instead</a>.';return}
-$("sb").disabled=true;
-try{await db.collection("signups").add({email:em,at:Date.now()});m.textContent="You're on the list. We'll email "+em+" when access opens.";$("email").value=""}
-catch(err){m.textContent="Couldn't save your signup. Try again in a moment."}
+$("sb").disabled=true;m.textContent="";
+try{var r=await fetch("/api/signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em})});var j={};try{j=await r.json()}catch(x){}
+if(!r.ok)throw new Error(j.error||"Couldn't save your request. Try again in a moment.");
+m.textContent="Thanks. We'll email "+em+" about access.";$("email").value=""}
+catch(err){m.textContent=err.message}
 finally{$("sb").disabled=false}
 });
+function renderPlans(ps){var el=$("plans");if(!ps||!ps.length){el.innerHTML='<p>Plans are coming soon. Request access below.</p>';return}
+el.innerHTML=ps.map(function(p){var cta=p.buy?'<a class="btn" target="_blank" rel="noopener" href="'+esc(p.buy)+'">Buy '+esc(p.name)+'</a><small style="color:var(--mute)">Your access key appears right after payment.</small>':'<a class="btn line" href="#access">Request access</a>';
+return '<div class="plan'+(p.popular?' pop':'')+'">'+(p.popular?'<span class="tg">Most popular</span>':'')+'<h3>'+esc(p.name)+'</h3><div class="pr">$'+esc(p.price)+'<small>/month</small></div><p style="margin:0;color:var(--mute)">'+esc(p.blurb)+'</p><ul>'+p.features.map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+cta+'</div>'}).join("")}
+fetch("/api/plans").then(function(r){return r.json()}).then(function(j){renderPlans(j.plans)}).catch(function(){renderPlans([])});
 try{var sk=localStorage.getItem("propxKey");var up=new URLSearchParams(location.search).get("key");if(up&&/^px_[a-f0-9]{24}$/.test(up)){sk=up;try{localStorage.setItem("propxKey",up)}catch(x){}history.replaceState(null,"",location.pathname);$("hint").textContent="Your access key is filled in. Enter a property address to run your search."}if(sk)$("key").value=sk}catch(x){}
-calc();initDb();
+calc();loadShared();
 })();
 </script>
 </body>
