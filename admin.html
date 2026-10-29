@@ -24,7 +24,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
 .msg{margin-top:10px;min-height:22px;font-size:14px}.bad{color:var(--bad)}.good{color:var(--good)}
 .newkey{margin-top:12px;padding:12px;border:2px solid var(--good);border-radius:8px}
-.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;min-width:80px}.bar i{display:block;height:100%;background:var(--good)}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;min-width:80px}.bar i{display:block;height:100%;background:var(--good)}.bar i.hot{background:#B45309}.bar i.full{background:var(--bad)}.sub{display:block;font-size:12px;color:var(--mute)}
 .wrap{overflow-x:auto}
 </style>
 </head>
@@ -49,8 +49,10 @@ code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
 </div>
 <div class="card">
 <h2>Customers</h2>
+<p id="sum" style="margin:0 0 6px;font-weight:600"></p>
 <p id="cap" style="color:var(--mute);margin:0 0 10px"></p>
-<div class="wrap"><table><thead><tr><th>Customer</th><th>Key</th><th>Used / limit</th><th>Status</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+<div style="margin:0 0 10px"><label for="q">Find a customer</label><input id="q" placeholder="Search by name, email or key" style="max-width:340px"></div>
+<div class="wrap"><table><thead><tr><th>Customer</th><th>Plan</th><th>Key</th><th>Used / limit</th><th>Status</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
 <div class="msg" id="tm" role="status"></div>
 </div>
 </div>
@@ -70,10 +72,15 @@ $("tm").textContent="";
 try{
 var j=await api({action:"list"});
 $("cap").textContent="Month "+j.month+". Our RentCast requests used: "+j.rentcast.used+" of "+j.rentcast.limit+" (each search uses 3). Raise MONTHLY_REQUEST_LIMIT in Vercel when you upgrade RentCast.";
-$("tb").innerHTML=j.customers.length?j.customers.map(function(c){
+var q=($("q").value||"").toLowerCase();
+var list=j.customers.filter(function(c){return !q||(c.name+" "+c.email+" "+c.key+" "+c.plan).toLowerCase().indexOf(q)>=0});
+$("sum").textContent=j.summary?(j.summary.active+" active of "+j.summary.total+" customers. Plan revenue: $"+j.summary.mrr+"/month (customers on a listed plan)."):"";
+$("tb").innerHTML=list.length?list.map(function(c){
 var pct=c.limit?Math.min(100,Math.round(c.used/c.limit*100)):0;
-return '<tr><td>'+esc(c.name)+'</td><td><code>'+esc(c.key)+'</code></td><td>'+c.used+' / '+c.limit+'<div class="bar"><i style="width:'+pct+'%"></i></div></td><td>'+(c.active?'<span class="good">Active</span>':'<span class="bad">Off</span>')+'</td><td><button class="sm" data-a="lim" data-k="'+esc(c.key)+'" data-l="'+c.limit+'">Change limit</button> <button class="sm" data-a="lnk" data-k="'+esc(c.key)+'">Copy link</button> <button class="sm" data-a="tog" data-k="'+esc(c.key)+'" data-on="'+(c.active?1:0)+'">'+(c.active?'Turn off':'Turn on')+'</button></td></tr>'}).join(""):'<tr><td colspan="5" style="color:var(--mute)">No customers yet.</td></tr>';
+var cls=pct>=100?"full":pct>=80?"hot":"";
+return '<tr><td>'+esc(c.name)+(c.email&&c.email!==c.name?'<span class="sub">'+esc(c.email)+'</span>':'')+(c.note?'<span class="sub">Note: '+esc(c.note)+'</span>':'')+'</td><td>'+esc(c.plan||"manual")+'</td><td><code>'+esc(c.key)+'</code></td><td>'+c.used+' / '+c.limit+' ('+pct+'%)<div class="bar"><i class="'+cls+'" style="width:'+pct+'%"></i></div></td><td>'+(c.active?'<span class="good">Active</span>':'<span class="bad">Off</span>')+'</td><td><button class="sm" data-a="lim" data-k="'+esc(c.key)+'" data-l="'+c.limit+'">Change limit</button> <button class="sm" data-a="note" data-k="'+esc(c.key)+'" data-n="'+esc(c.note)+'">Note</button> <button class="sm" data-a="lnk" data-k="'+esc(c.key)+'">Copy link</button> <button class="sm" data-a="tog" data-k="'+esc(c.key)+'" data-on="'+(c.active?1:0)+'">'+(c.active?'Turn off':'Turn on')+'</button></td></tr>'}).join(""):'<tr><td colspan="6" style="color:var(--mute)">'+(j.customers.length?"No match.":"No customers yet.")+'</td></tr>';
 }catch(e){$("tm").innerHTML='<span class="bad">'+esc(e.message)+'</span>'}}
+$("q").addEventListener("input",function(){if(!$("app").hidden)load()});
 $("go").onclick=async function(){
 secret=$("sec").value;$("lm").textContent="";
 try{await api({action:"list"});$("login").hidden=true;$("app").hidden=false;load()}catch(e){secret="";$("lm").innerHTML='<span class="bad">'+esc(e.message)+'</span>'}};
@@ -92,6 +99,7 @@ var k=b.getAttribute("data-k"),a=b.getAttribute("data-a");
 try{
 if(a==="lnk"){try{navigator.clipboard.writeText(location.origin+"/?key="+k);b.textContent="Copied"}catch(x){}return}
 if(a==="tog"){await api({action:"update",key:k,active:b.getAttribute("data-on")!=="1"})}
+else if(a==="note"){var nt=window.prompt("Note for this customer (shown in the list):",b.getAttribute("data-n")||"");if(nt===null)return;await api({action:"update",key:k,note:nt})}
 else if(a==="lim"){var v=window.prompt("New searches per month for this customer:",b.getAttribute("data-l"));if(v===null)return;await api({action:"update",key:k,limit:v})}
 load()}catch(err){$("tm").innerHTML='<span class="bad">'+esc(err.message)+'</span>'}});
 })();
