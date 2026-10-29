@@ -13,6 +13,10 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:url" content="https://propx-zeta.vercel.app/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://propx-zeta.vercel.app/">
+<meta name="theme-color" content="#0B3B36">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"PropX","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"Real estate deal analysis for flips, rentals, wholesale and BRRRR.","offers":[{"@type":"Offer","name":"Starter","price":"75","priceCurrency":"USD"},{"@type":"Offer","name":"Pro","price":"150","priceCurrency":"USD"},{"@type":"Offer","name":"Team","price":"299","priceCurrency":"USD"}]}</script>
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="PropX — Know the numbers before you buy.">
 <meta name="twitter:description" content="Enter any property address and get value, comps, repairs, rent, profit and what to check, in one report.">
@@ -112,6 +116,11 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 .faq details{border-bottom:1px solid var(--line);padding:14px 0}.faq summary{font-weight:700;cursor:pointer}.faq p{margin:8px 0 0;color:var(--mute)}
 .acts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}.acts .btn{padding:7px 14px;font-size:14px}.scn{font-size:14px;color:var(--mute);margin:0 0 12px}
 @media print{.top,nav,section:not(#report),.band,footer,.acts,.tabs,#go,#demo,#dl,.keyrow{display:none!important}#report{padding:0}body{background:#fff}}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:10px}.step{border-top:4px solid var(--brass);padding-top:12px}.step b{font:900 28px Archivo,sans-serif;color:var(--brass)}.step h3{margin:2px 0 6px}.step p{margin:0;color:var(--mute)}
+.trust{display:flex;flex-wrap:wrap;gap:8px 22px;margin:16px 0 0;padding:0;list-style:none;font-size:14px;color:var(--mute)}.trust li:before{content:"\2713\00a0";color:var(--good);font-weight:900}
+.sv td,.sv th{text-align:right;white-space:nowrap}.sv td:first-child,.sv th:first-child{text-align:left}.sv .neg{color:var(--bad)}.sv .pos{color:var(--good)}
+.saved{margin-top:6px}.saved li{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.saved li span{flex:1;min-width:180px}.saved .btn{padding:4px 10px;font-size:13px}
+.rep>*{min-width:0}.stick{display:none}@media(max-width:640px){.stick{display:block;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:30;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.3)}}
 .recent{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;font-size:13px;color:var(--hm)}
 .recent button{border:1px solid var(--line);background:transparent;color:inherit;border-radius:99px;padding:4px 12px;font:500 13px Archivo,sans-serif;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .recent button:hover{border-color:var(--brass)}
@@ -120,7 +129,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 </head>
 <body>
 <div class="top"><div class="wrap">
-<nav><a class="logo" href="#">Prop<b>X</b></a><div><a class="l" href="#report">Report</a><a class="l" href="#who">Who it's for</a><a class="l" href="#pricing">Pricing</a><a class="l" href="#faq">FAQ</a><a class="l" href="#access">Get access</a></div></nav>
+<nav><a class="logo" href="#">Prop<b>X</b></a><div><a class="l" href="#report">Report</a><a class="l" href="#who">Who it's for</a><a class="l" href="#how">How it works</a><a class="l" href="#pricing">Pricing</a><a class="l" href="#faq">FAQ</a><a class="l" href="#access">Get access</a></div></nav>
 <header class="hero">
 <h1>Know the numbers before you buy.</h1>
 <p>Enter an address. PropX estimates the price, comps, repairs, rent and expenses, then works out profit, ROI and what to investigate.</p>
@@ -128,6 +137,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <div class="hint" id="hint" aria-live="polite"></div>
 <div id="recent" class="recent" hidden></div>
 <p class="hint" style="margin-top:4px"><a href="#report" style="color:var(--brass);font-weight:600">See a sample report</a> before you search.</p>
+<ul class="trust"><li>Flip, rental, wholesale and BRRRR in one report</li><li>Comps, rent and risk flags from real property data</li><li>Share, print and save every deal</li></ul>
 <div class="keyrow"><label for="key">Access key</label><input id="key" type="text" autocomplete="off" spellcheck="false" placeholder="px_…" aria-describedby="keyh"><span id="keyh">Subscribers get a key. <a href="#access">Request one</a>.</span></div>
 </header>
 </div></div>
@@ -161,13 +171,16 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <div><label for="rate">Interest rate (%)</label><input id="rate" type="number" inputmode="decimal" value="11"></div>
 <div><label for="buyc">Buying costs (%)</label><input id="buyc" type="number" inputmode="decimal" value="2"></div>
 <div><label for="sellc">Selling costs (%)</label><input id="sellc" type="number" inputmode="decimal" value="8"></div>
+<div id="fr" hidden><label for="rg">Yearly rent and value growth (%)</label><input id="rg" type="number" inputmode="decimal" value="3"></div>
 <div id="fw" hidden><label for="fee">Your wholesale fee ($)</label><input id="fee" type="number" inputmode="decimal" value="10000"></div>
 <div id="fb" hidden><label for="refi">Refinance at (% of renovated value)</label><input id="refi" type="number" inputmode="decimal" value="75"></div>
 </div>
 <div class="tabs" role="tablist" style="margin-top:14px"><button class="tab" role="tab" id="t1" aria-selected="true">Flip</button><button class="tab" role="tab" id="t2" aria-selected="false">Rental</button><button class="tab" role="tab" id="t3" aria-selected="false">Wholesale</button><button class="tab" role="tab" id="t4" aria-selected="false">BRRRR</button></div>
-<div class="acts"><button class="btn line" id="shr" type="button">Copy share link</button><button class="btn line" id="prt" type="button">Print or save PDF</button><button class="btn line" id="sva" type="button">Save as Scenario A</button></div>
+<div class="acts"><button class="btn line" id="shr" type="button">Copy share link</button><button class="btn line" id="prt" type="button">Print or save PDF</button><button class="btn line" id="sva" type="button">Save as Scenario A</button><button class="btn line" id="svd" type="button">Save this deal</button><button class="btn line" id="csv" type="button">Export CSV</button></div>
 <p class="scn" id="scn" hidden></p>
 <dl class="kv" id="kv"></dl>
+<div id="ex"></div>
+<div id="sd" hidden><h3>Your saved deals</h3><ul class="saved" id="sl"></ul><div class="wide" id="cmpw" hidden></div></div>
 <div id="cw" hidden><h3>Comparable sales</h3><div class="wide"><table class="comps"><thead><tr><th>Address</th><th>Details</th><th>Sold</th><th>Price</th></tr></thead><tbody id="cb"></tbody></table></div></div>
 <h3>Check before you buy</h3>
 <ul class="flags" id="flags"></ul>
@@ -204,6 +217,11 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 </dl>
 </section>
 
+<section class="wrap" id="how">
+<h2>How it works.</h2>
+<div class="steps"><div class="step"><b>1</b><h3>Type an address</h3><p>PropX pulls the value, comps, rent, taxes and public permit records for that property.</p></div><div class="step"><b>2</b><h3>Adjust the numbers</h3><p>Change price, repairs, financing and more. Everything updates live, and you can try a flip, rental, wholesale or BRRRR.</p></div><div class="step"><b>3</b><h3>Decide and share</h3><p>Check the flags, stress-test the deal, then save it, share a link or print a PDF for your lender or partner.</p></div></div>
+</section>
+
 <section class="wrap" id="pricing">
 <h2>Simple plans.</h2>
 <p style="max-width:60ch;color:var(--mute)">Each plan comes with a personal access key and a monthly number of property searches. One search is one address lookup. Pick a plan and your key is ready as soon as you pay.</p>
@@ -229,6 +247,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <div class="list" id="sl" hidden></div>
 </section></div>
 
+<a class="btn stick" href="#pricing">See plans</a>
 <footer><div class="wrap"><p><b>PropX</b> — Know the numbers before you buy.</p>
 <p>Estimates for informational purposes only. Not financial, legal or investment advice. Verify all figures independently before making an offer.</p>
 <p><a href="/terms.html">Terms &amp; Privacy</a></p></div></footer>
@@ -236,7 +255,7 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)};
-var ids=["price","repairs","arv","rent","tax","ins","other","months","ltv","rate","buyc","sellc","fee","refi"];
+var ids=["price","repairs","arv","rent","tax","ins","other","months","ltv","rate","buyc","sellc","fee","refi","rg"];
 var curSum="",scnA="",mode="flip",comps=[],aiFlags=[],last="",lastWork="",lastEst=null,lastArv=0;
 var usd=function(n){return (n<0?"-$":"$")+Math.abs(Math.round(n)).toLocaleString("en-US")};
 var pct=function(n){return (isFinite(n)?(n*100).toFixed(1):"0.0")+"%"};
@@ -274,6 +293,22 @@ var col=cl(s);
 $("ring").style.stroke=col;$("ring").setAttribute("stroke-dashoffset",351.9*(1-s/100));
 $("sc").textContent=s;$("st").textContent=vd;$("st").style.color=col;$("ss").textContent=sm;$("kv").innerHTML=kv;
 curSum=vd+" ("+s+"/100): "+sm;
+var ex="";
+if(mode==="flip"&&v.arv>0&&v.price>0){
+var prof=function(a,r){var rr=v.repairs*r,aa=v.arv*a;return aa-(v.price+rr+buyC+interest+carry+aa*v.sellc/100)};
+var ars=[.9,.95,1,1.05,1.1],rps=[.8,1,1.2];
+ex='<h3>What if the numbers move?</h3><p class="fine" style="margin:0 0 8px">Estimated flip profit as the renovated value and repair bill change.</p><div class="wide"><table class="comps sv"><thead><tr><th>Repairs \\ Value</th>'+ars.map(function(a){return"<th>"+(a===1?"As entered":(a>1?"+":"")+Math.round((a-1)*100)+"%")+"</th>"}).join("")+'</tr></thead><tbody>'+rps.map(function(r){return"<tr><td>"+(r===1?"Repairs as entered":(r>1?"+":"")+Math.round((r-1)*100)+"% repairs")+"</td>"+ars.map(function(a){var p=prof(a,r);return'<td class="'+(p<0?"neg":"pos")+'">'+usd(p)+"</td>"}).join("")+"</tr>"}).join("")+"</tbody></table></div>";
+}
+if(mode==="rental"&&v.price>0){
+var g=v.rg/100,bal=loan,mi=v.rate/1200,pm=pmt(loan,v.rate),yrs=[1,2,3,5,10],cum=0,val=v.arv>0?v.arv:v.price,rows="",rent=egi,op=opex;
+for(var y=1;y<=10;y++){
+for(var m2=0;m2<12;m2++){var ip=bal*mi;bal=Math.max(0,bal-(pm-ip))}
+var cf=rent-op-pm*12;cum+=cf;var eq=val-bal;
+if(yrs.indexOf(y)>=0)rows+="<tr><td>Year "+y+"</td><td>"+usd(rent)+"</td><td class=\""+(cf<0?"neg":"pos")+"\">"+usd(cf)+"</td><td>"+usd(bal)+"</td><td>"+usd(eq)+"</td><td>"+usd(cum+eq-cashR)+"</td></tr>";
+rent*=1+g;op*=1+g;val*=1+g}
+ex='<h3>Where this rental goes over time</h3><p class="fine" style="margin:0 0 8px">Uses '+v.rg+'% yearly growth in rent, expenses and value. Total gain is cash flow plus equity minus the cash you put in.</p><div class="wide"><table class="comps sv"><thead><tr><th></th><th>Rent after vacancy</th><th>Cash flow</th><th>Loan balance</th><th>Equity</th><th>Total gain</th></tr></thead><tbody>'+rows+"</tbody></table></div>";
+}
+$("ex").innerHTML=ex;
 var f=[];
 var ad=function(c,t,p,w,h){f.push({c:c,t:t,p:p,w:w,h:h})};
 if(v.arv>0&&v.price>0){if(v.price>maxOffer)ad("bad","Price is above the 70% rule","Your price is "+usd(v.price-maxOffer)+" over the max offer of "+usd(maxOffer)+" (70% of renovated value minus repairs).","At this price the profit after repairs, financing, holding and selling costs is usually too thin to cover surprises.","Negotiate down, or re-check the renovated value and repair budget.");else ad("ok","Price is within the 70% rule","Your price is at or under the max offer of "+usd(maxOffer)+".","This leaves room for costs and surprises.","Still confirm the renovated value with your own comps.")}
@@ -291,8 +326,22 @@ if(v.price<=0){$("ring").setAttribute("stroke-dashoffset",351.9);$("sc").textCon
 last="PropX deal report\n"+($("ad").textContent)+"\n\n"+$("bd").textContent+"\n\nDeal score: "+s+"/100 ("+$("st").textContent+")\nEstimated profit: "+usd(profit)+"\nROI on cash invested: "+pct(roi)+"\nCash needed: "+usd(cash)+"\nMax offer (70% rule): "+usd(maxOffer)+"\n\nInputs\n"+ids.map(function(i){return i+": "+v[i]}).join("\n")+"\n\nRental\nNOI: "+usd(noi)+"/yr\nCap rate: "+pct(cap)+"\n\nComps\n"+(comps.map(function(c){return c.address+" | "+c.details+" | "+c.sold+" | "+c.price}).join("\n")||"none")+"\n\nCheck before you buy\n"+f.map(function(x){return "- "+x.t+". Problem: "+x.p+" Why it matters: "+x.w+" How to check: "+x.h}).join("\n")+"\n\nCondition: "+($("cond").value===""?"not selected":$("cond").options[$("cond").selectedIndex].text+". "+$("cdo").textContent)+"\n\nWork done on this house (permit records)\n"+(lastWork||"none loaded")+"\nOther work done or planned: "+($("wnote").value.trim()||"none entered")+"\n\nEstimates only. Not financial advice. Verify all figures.\n";
 }
 ids.forEach(function(i){$(i).addEventListener("input",calc)});
-function setMode(m){mode=m;[["t1","flip"],["t2","rental"],["t3","wholesale"],["t4","brrrr"]].forEach(function(p){$(p[0]).setAttribute("aria-selected",m===p[1])});$("fw").hidden=m!=="wholesale";$("fb").hidden=m!=="brrrr";calc()}
+function setMode(m){mode=m;[["t1","flip"],["t2","rental"],["t3","wholesale"],["t4","brrrr"]].forEach(function(p){$(p[0]).setAttribute("aria-selected",m===p[1])});$("fr").hidden=m!=="rental";$("fw").hidden=m!=="wholesale";$("fb").hidden=m!=="brrrr";calc()}
 $("t1").onclick=function(){setMode("flip")};$("t2").onclick=function(){setMode("rental")};$("t3").onclick=function(){setMode("wholesale")};$("t4").onclick=function(){setMode("brrrr")};
+var DK="propxDeals";
+function getDeals(){try{var a=JSON.parse(localStorage.getItem(DK)||"[]");return Array.isArray(a)?a:[]}catch(x){return[]}}
+function putDeals(a){try{localStorage.setItem(DK,JSON.stringify(a.slice(0,20)))}catch(x){}}
+function showDeals(){var a=getDeals(),box=$("sd");box.hidden=!a.length;$("cmpw").hidden=true;
+$("sl").innerHTML=a.map(function(d,i){return'<li><span><b>'+esc(d.a)+'</b><br><small style="color:var(--mute)">'+esc(d.m)+": "+esc(d.s)+'</small></span><button class="btn line" data-a="ld" data-i="'+i+'">Open</button><button class="btn line" data-a="rm" data-i="'+i+'">Delete</button></li>'}).join("")+(a.length>1?'<li><button class="btn" id="cmpb" type="button">Compare saved deals</button></li>':"")}
+$("svd").onclick=function(){calc();var a=getDeals(),st={m:mode,a:$("ad").textContent,s:curSum,v:{}};ids.forEach(function(i){st.v[i]=$(i).value});a.unshift(st);putDeals(a);showDeals();$("hint").textContent="Deal saved on this device.";$("sd").scrollIntoView({behavior:"smooth",block:"nearest"})};
+$("sl").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;var a=getDeals();
+if(b.id==="cmpb"){$("cmpw").hidden=false;$("cmpw").innerHTML='<table class="comps"><thead><tr><th>Deal</th><th>View</th><th>Result</th><th>Price</th><th>Repairs</th><th>Renovated value</th></tr></thead><tbody>'+a.map(function(d){return"<tr><td>"+esc(d.a)+"</td><td>"+esc(d.m)+"</td><td>"+esc(d.s)+"</td><td>"+usd(+d.v.price||0)+"</td><td>"+usd(+d.v.repairs||0)+"</td><td>"+usd(+d.v.arv||0)+"</td></tr>"}).join("")+"</tbody></table>";return}
+var i=+b.getAttribute("data-i"),d=a[i];if(!d)return;
+if(b.getAttribute("data-a")==="rm"){a.splice(i,1);putDeals(a);showDeals();return}
+ids.forEach(function(k){if(d.v[k]!==undefined)$(k).value=d.v[k]});$("ad").textContent=d.a;setMode(d.m);$("bd").textContent="Saved deal. Numbers are the ones you saved.";$("report").scrollIntoView({behavior:"smooth"})});
+$("csv").onclick=function(){calc();var q=function(x){return'"'+String(x).replace(/"/g,'""')+'"'},r=[["Address",$("ad").textContent],["View",mode],["Result",curSum]];ids.forEach(function(i){r.push([i,$(i).value])});
+var blob=new Blob([r.map(function(x){return x.map(q).join(",")}).join("\n")],{type:"text/csv"}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download="propx-deal.csv";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},500)};
+showDeals();
 $("sva").onclick=function(){calc();scnA=curSum;calc()};
 $("prt").onclick=function(){calc();window.print()};
 $("shr").onclick=function(){calc();var st={m:mode,a:$("ad").textContent,v:{}};ids.forEach(function(i){st.v[i]=$(i).value});var u=location.origin+"/#d="+btoa(unescape(encodeURIComponent(JSON.stringify(st))));
