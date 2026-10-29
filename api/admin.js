@@ -82,6 +82,14 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true });
     }
 
+    if (action === "signups") {
+      const [h] = await pipe(conf, [["HGETALL", "propx:signups"]]);
+      const list = [];
+      for (let i = 0; h && i < h.length; i += 2) { let at = ""; try { at = JSON.parse(h[i + 1]).at || ""; } catch (e) { /* ignore */ } list.push({ email: h[i], at }); }
+      list.sort((x, y) => (x.at < y.at ? 1 : -1));
+      return res.status(200).json({ signups: list.slice(0, 500) });
+    }
+
     return res.status(400).json({ error: "Unknown action." });
   } catch (e) {
     return res.status(500).json({ error: "Admin error: " + (e && e.message ? e.message : "unknown") });
