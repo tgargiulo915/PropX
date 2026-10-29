@@ -132,6 +132,12 @@ module.exports = async (req, res) => {
   if (!cust) return res.status(401).json({ error: "That access key isn't valid. Check it and try again.", needKey: true });
   if (cust.active === false) return res.status(403).json({ error: "This access key is turned off. Contact support." });
   const limit = Number(cust.limit) || 0;
+  // Burst guard: stops a leaked or shared key from burning the month in a minute.
+  try {
+    const bkey = "propx:burst:" + ck + ":" + Math.floor(Date.now() / 60000);
+    const bo = await pipe(conf, [["INCRBY", bkey, 1], ["EXPIRE", bkey, 120]]);
+    if (Number(bo[0]) > 6) return res.status(429).json({ error: "Too many searches in a minute. Wait a moment and try again." });
+  } catch (e) { return unavailable(e); }
   let used;
   try {
     const out = await pipe(conf, [["INCRBY", ukey, 1], ["EXPIRE", ukey, 3000000]]);
