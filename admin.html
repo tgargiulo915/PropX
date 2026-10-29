@@ -48,6 +48,11 @@ code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
 <div class="msg" id="am" role="status"></div>
 </div>
 <div class="card">
+<h2>Access requests</h2>
+<p style="color:var(--mute);margin:0 0 8px">Emails from the "Request access" form. Create a key for them above, then email it.</p>
+<ul id="sg" style="margin:0;padding-left:18px"></ul>
+</div>
+<div class="card">
 <h2>Customers</h2>
 <p id="sum" style="margin:0 0 6px;font-weight:600"></p>
 <p id="cap" style="color:var(--mute);margin:0 0 10px"></p>
@@ -80,10 +85,11 @@ var pct=c.limit?Math.min(100,Math.round(c.used/c.limit*100)):0;
 var cls=pct>=100?"full":pct>=80?"hot":"";
 return '<tr><td>'+esc(c.name)+(c.email&&c.email!==c.name?'<span class="sub">'+esc(c.email)+'</span>':'')+(c.note?'<span class="sub">Note: '+esc(c.note)+'</span>':'')+'</td><td>'+esc(c.plan||"manual")+'</td><td><code>'+esc(c.key)+'</code></td><td>'+c.used+' / '+c.limit+' ('+pct+'%)<div class="bar"><i class="'+cls+'" style="width:'+pct+'%"></i></div></td><td>'+(c.active?'<span class="good">Active</span>':'<span class="bad">Off</span>')+'</td><td><button class="sm" data-a="lim" data-k="'+esc(c.key)+'" data-l="'+c.limit+'">Change limit</button> <button class="sm" data-a="note" data-k="'+esc(c.key)+'" data-n="'+esc(c.note)+'">Note</button> <button class="sm" data-a="lnk" data-k="'+esc(c.key)+'">Copy link</button> <button class="sm" data-a="tog" data-k="'+esc(c.key)+'" data-on="'+(c.active?1:0)+'">'+(c.active?'Turn off':'Turn on')+'</button></td></tr>'}).join(""):'<tr><td colspan="6" style="color:var(--mute)">'+(j.customers.length?"No match.":"No customers yet.")+'</td></tr>';
 }catch(e){$("tm").innerHTML='<span class="bad">'+esc(e.message)+'</span>'}}
+async function loadSg(){try{var s=await api({action:"signups"});$("sg").innerHTML=s.signups.length?s.signups.map(function(x){return"<li>"+esc(x.email)+' <span class="sub" style="display:inline">'+esc((x.at||"").slice(0,10))+"</span></li>"}).join(""):"<li style=\"list-style:none;color:var(--mute)\">No requests yet.</li>"}catch(e){}}
 $("q").addEventListener("input",function(){if(!$("app").hidden)load()});
 $("go").onclick=async function(){
 secret=$("sec").value;$("lm").textContent="";
-try{await api({action:"list"});$("login").hidden=true;$("app").hidden=false;load()}catch(e){secret="";$("lm").innerHTML='<span class="bad">'+esc(e.message)+'</span>'}};
+try{await api({action:"list"});$("login").hidden=true;$("app").hidden=false;load();loadSg()}catch(e){secret="";$("lm").innerHTML='<span class="bad">'+esc(e.message)+'</span>'}};
 $("sec").addEventListener("keydown",function(e){if(e.key==="Enter")$("go").click()});
 $("add").onclick=async function(){
 $("am").textContent="";$("nk").innerHTML="";$("add").disabled=true;
