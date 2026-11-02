@@ -48,9 +48,14 @@ code{font:13px ui-monospace,Menlo,monospace;word-break:break-all}
 <div class="msg" id="am" role="status"></div>
 </div>
 <div class="card">
-<h2>Access requests</h2>
-<p style="color:var(--mute);margin:0 0 8px">Emails from the "Request access" form. Create a key for them above, then email it.</p>
-<ul id="sg" style="margin:0;padding-left:18px"></ul>
+<h2>Needs approval</h2>
+<p style="color:var(--mute);margin:0 0 8px">Customers who paid. Their key works as soon as you approve.</p>
+<div id="pa"></div>
+</div>
+<div class="card">
+<h2>Sign-ups</h2>
+<p style="color:var(--mute);margin:0 0 8px">People who created an account. Approve someone ahead of time and their key activates the moment they pay.</p>
+<div class="wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr></thead><tbody id="sg"></tbody></table></div>
 </div>
 <div class="card">
 <h2>Customers</h2>
@@ -77,15 +82,17 @@ $("tm").textContent="";
 try{
 var j=await api({action:"list"});
 $("cap").textContent="Month "+j.month+". Our RentCast requests used: "+j.rentcast.used+" of "+j.rentcast.limit+" (each search uses 3). Raise MONTHLY_REQUEST_LIMIT in Vercel when you upgrade RentCast.";
+var pend=j.customers.filter(function(c){return c.approval==="pending"});
+$("pa").innerHTML=pend.length?'<table><thead><tr><th>Customer</th><th>Plan</th><th>Key</th><th></th></tr></thead><tbody>'+pend.map(function(c){return"<tr><td>"+esc(c.name)+(c.company?'<span class="sub">'+esc(c.company)+"</span>":"")+(c.email?'<span class="sub">'+esc(c.email)+"</span>":"")+"</td><td>"+esc(c.plan||"manual")+"</td><td><code>"+esc(c.key)+'</code></td><td><button class="sm" data-ap="approve" data-k="'+esc(c.key)+'">Approve</button> <button class="sm" data-ap="reject" data-k="'+esc(c.key)+'">Reject</button></td></tr>'}).join("")+"</tbody></table>":'<p style="margin:0;color:var(--mute)">Nobody is waiting for approval.</p>';
 var q=($("q").value||"").toLowerCase();
 var list=j.customers.filter(function(c){return !q||(c.name+" "+c.email+" "+c.key+" "+c.plan).toLowerCase().indexOf(q)>=0});
 $("sum").textContent=j.summary?(j.summary.active+" active of "+j.summary.total+" customers. Plan revenue: $"+j.summary.mrr+"/month (customers on a listed plan)."):"";
 $("tb").innerHTML=list.length?list.map(function(c){
 var pct=c.limit?Math.min(100,Math.round(c.used/c.limit*100)):0;
 var cls=pct>=100?"full":pct>=80?"hot":"";
-return '<tr><td>'+esc(c.name)+(c.email&&c.email!==c.name?'<span class="sub">'+esc(c.email)+'</span>':'')+(c.note?'<span class="sub">Note: '+esc(c.note)+'</span>':'')+'</td><td>'+esc(c.plan||"manual")+'</td><td><code>'+esc(c.key)+'</code></td><td>'+c.used+' / '+c.limit+' ('+pct+'%)<div class="bar"><i class="'+cls+'" style="width:'+pct+'%"></i></div></td><td>'+(c.active?'<span class="good">Active</span>':'<span class="bad">Off</span>')+'</td><td><button class="sm" data-a="lim" data-k="'+esc(c.key)+'" data-l="'+c.limit+'">Change limit</button> <button class="sm" data-a="note" data-k="'+esc(c.key)+'" data-n="'+esc(c.note)+'">Note</button> <button class="sm" data-a="lnk" data-k="'+esc(c.key)+'">Copy link</button> <button class="sm" data-a="tog" data-k="'+esc(c.key)+'" data-on="'+(c.active?1:0)+'">'+(c.active?'Turn off':'Turn on')+'</button></td></tr>'}).join(""):'<tr><td colspan="6" style="color:var(--mute)">'+(j.customers.length?"No match.":"No customers yet.")+'</td></tr>';
+return '<tr><td>'+esc(c.name)+(c.email&&c.email!==c.name?'<span class="sub">'+esc(c.email)+'</span>':'')+(c.note?'<span class="sub">Note: '+esc(c.note)+'</span>':'')+'</td><td>'+esc(c.plan||"manual")+'</td><td><code>'+esc(c.key)+'</code></td><td>'+c.used+' / '+c.limit+' ('+pct+'%)<div class="bar"><i class="'+cls+'" style="width:'+pct+'%"></i></div></td><td>'+(c.approval==="pending"?'<span class="bad">Awaiting approval</span>':c.approval==="rejected"?'<span class="bad">Rejected</span>':c.active?'<span class="good">Active</span>':'<span class="bad">Off</span>')+'</td><td><button class="sm" data-a="lim" data-k="'+esc(c.key)+'" data-l="'+c.limit+'">Change limit</button> <button class="sm" data-a="note" data-k="'+esc(c.key)+'" data-n="'+esc(c.note)+'">Note</button> <button class="sm" data-a="lnk" data-k="'+esc(c.key)+'">Copy link</button> <button class="sm" data-a="tog" data-k="'+esc(c.key)+'" data-on="'+(c.active?1:0)+'">'+(c.active?'Turn off':'Turn on')+'</button></td></tr>'}).join(""):'<tr><td colspan="6" style="color:var(--mute)">'+(j.customers.length?"No match.":"No customers yet.")+'</td></tr>';
 }catch(e){$("tm").innerHTML='<span class="bad">'+esc(e.message)+'</span>'}}
-async function loadSg(){try{var s=await api({action:"signups"});$("sg").innerHTML=s.signups.length?s.signups.map(function(x){return"<li>"+esc(x.email)+' <span class="sub" style="display:inline">'+esc((x.at||"").slice(0,10))+"</span></li>"}).join(""):"<li style=\"list-style:none;color:var(--mute)\">No requests yet.</li>"}catch(e){}}
+async function loadSg(){try{var s=await api({action:"signups"});$("sg").innerHTML=s.signups.length?s.signups.map(function(x){var st=x.status==="approved"?'<span class="good">Approved</span>':x.status==="rejected"?'<span class="bad">Rejected</span>':"Pending";return"<tr><td>"+esc(x.name||"(no name)")+(x.company?'<span class="sub">'+esc(x.company)+"</span>":"")+"</td><td>"+esc(x.email)+'<span class="sub">'+esc((x.at||"").slice(0,10))+(x.paid?" · paid":"")+"</span></td><td>"+st+"</td><td>"+(x.status!=="approved"?'<button class="sm" data-s="approved" data-e="'+esc(x.email)+'">Approve</button> ':"")+(x.status!=="rejected"?'<button class="sm" data-s="rejected" data-e="'+esc(x.email)+'">Reject</button>':"")+"</td></tr>"}).join(""):'<tr><td colspan="4" style="color:var(--mute)">No sign-ups yet.</td></tr>'}catch(e){}}
 $("q").addEventListener("input",function(){if(!$("app").hidden)load()});
 $("go").onclick=async function(){
 secret=$("sec").value;$("lm").textContent="";
@@ -99,6 +106,10 @@ $("cpl").onclick=function(){try{navigator.clipboard.writeText(location.origin+"/
 $("cp").onclick=function(){try{navigator.clipboard.writeText(j.key);$("cp").textContent="Copied"}catch(e){}};
 $("nm").value="";load()}catch(e){$("am").innerHTML='<span class="bad">'+esc(e.message)+'</span>'}
 finally{$("add").disabled=false}};
+$("pa").addEventListener("click",async function(e){var b=e.target.closest("button");if(!b)return;
+try{await api({action:b.getAttribute("data-ap"),key:b.getAttribute("data-k")});await load();loadSg()}catch(err){$("tm").innerHTML='<span class="bad">'+esc(err.message)+'</span>'}});
+$("sg").addEventListener("click",async function(e){var b=e.target.closest("button");if(!b)return;
+try{await api({action:"setsignup",email:b.getAttribute("data-e"),status:b.getAttribute("data-s")});loadSg()}catch(err){$("tm").innerHTML='<span class="bad">'+esc(err.message)+'</span>'}});
 $("tb").addEventListener("click",async function(e){
 var b=e.target.closest("button");if(!b)return;
 var k=b.getAttribute("data-k"),a=b.getAttribute("data-a");
