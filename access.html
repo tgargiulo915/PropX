@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Get access | PropX</title>
-<meta name="description" content="Choose a PropX plan or request access. Each plan comes with a personal access key and a monthly number of property searches.">
+<title>Sign up | PropX</title>
+<meta name="description" content="Sign up for PropX, choose a plan and get your personal access key once your account is approved.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="canonical" href="https://propx-zeta.vercel.app/access.html">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800;900&display=swap">
@@ -37,7 +37,7 @@ h2{font-size:clamp(26px,4vw,38px);margin-bottom:12px}
 .plan ul{display:grid;align-content:start;gap:7px;list-style:none;padding:0;margin:0;flex:1;font-size:15px}.plan li{padding-left:24px;position:relative}.plan li:before{content:"\2713";position:absolute;left:0;color:var(--good);font-weight:900}.plan.pop li:before{color:var(--brass)}
 .plan .tg{font-size:12px;font-weight:800;color:#2A1D00;background:var(--brass);border-radius:99px;padding:2px 10px;align-self:flex-start}
 .plan small.n{color:var(--mute);font-size:13px}.plan.pop small.n{color:var(--hm)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fine{font-size:13.5px;color:var(--mute);margin:12px 0}.fine a{color:var(--ink)}.plan.dim .btn{opacity:.55}
 .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
 .box h3{margin:0 0 6px;font-size:20px}.box p{margin:0 0 14px;color:var(--mute)}
 label{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
@@ -48,48 +48,54 @@ input{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--line);bor
 .steps li{counter-increment:s}.steps li:before{content:counter(s);display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--hero);color:var(--brass);font-weight:900;margin-bottom:10px}
 .steps b{display:block;margin-bottom:4px}.steps span{color:var(--mute)}
 footer{background:var(--hero);color:var(--hm);padding:36px 0;font-size:13px}footer a{color:var(--brass)}footer b{color:var(--hi)}footer p{margin:6px 0;max-width:80ch}
-@media(max-width:760px){.two{grid-template-columns:1fr}section.wrap{padding-top:48px;padding-bottom:48px}}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}section.wrap{padding-top:48px;padding-bottom:48px}}
 </style>
 </head>
 <body>
 <div class="top"><div class="wrap">
 <nav><a class="logo" href="/">Prop<b>X</b></a><a class="l" href="/">Back to the report</a></nav>
 <header class="hero">
-<h1>Get access to PropX.</h1>
-<p>Pick a plan and you get a personal access key with a monthly number of property searches. One search is one address lookup.</p>
+<h1>Sign up for PropX.</h1>
+<p>Create your account, choose a plan and pay. After we approve your account, your personal access key starts working.</p>
 </header>
 </div></div>
 
 <main>
-<section class="wrap" style="padding-bottom:24px">
-<h2>Choose a plan.</h2>
-<p class="lead">Monthly plans. Cancel any time. Changing the numbers in a report is free and never uses a search.</p>
+<section class="wrap" id="signup" style="padding-bottom:24px">
+<h2>1. Create your account.</h2>
+<p class="lead">Tell us who you are. You'll choose and pay for a plan next.</p>
+<div class="box" style="max-width:640px" id="sbox">
+<form id="sf" novalidate>
+<div class="grid2"><div><label for="name">Full name</label><input id="name" required autocomplete="name"></div><div><label for="company">Company (optional)</label><input id="company" autocomplete="organization"></div></div>
+<div style="margin-top:12px"><label for="email">Email address</label><input id="email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+<p class="fine">By signing up you agree to the <a href="/terms.html">terms and privacy summary</a>.</p>
+<button class="btn" id="sb" type="submit">Create account</button>
+</form>
+<div class="msg" id="sm" role="status" aria-live="polite"></div>
+</div>
+</section>
+
+<section class="wrap" id="plansec" style="padding-top:24px">
+<h2>2. Choose a plan.</h2>
+<p class="lead" id="plead">Monthly plans. Cancel any time. Changing the numbers in a report is free and never uses a search.</p>
 <div class="plans" id="plans"><p>Loading plans…</p></div>
 </section>
 
 <section class="wrap">
-<h2>How you get your key.</h2>
+<h2>3. We approve, you start.</h2>
 <ol class="steps">
-<li><b>Pick a plan</b><span>Pay for the plan you want. Payment is handled by Stripe, so PropX never sees your card.</span></li>
-<li><b>Get your key right away</b><span>After you pay, you land on a page that shows your access key. Copy it and keep it safe.</span></li>
-<li><b>Start checking deals</b><span>Paste the key into PropX, or use the link on that page. Your searches reset on the first of each month.</span></li>
+<li><b>Pay securely</b><span>Payment is handled by Stripe, so PropX never sees your card.</span></li>
+<li><b>We review your account</b><span>We check each new account before it goes live. You'll see your key right after paying, and it starts working as soon as we approve you.</span></li>
+<li><b>Start checking deals</b><span>Paste your key into PropX or use the link on the confirmation page. Searches reset on the first of each month.</span></li>
 </ol>
 </section>
 
 <section class="wrap" style="padding-top:0">
-<div class="two">
-<div class="box" id="request">
-<h3>Not ready to buy?</h3>
-<p>Leave your email and we'll get in touch about access.</p>
-<form id="sf"><div class="row"><div><label for="email">Email address</label><input id="email" type="email" required autocomplete="email" placeholder="you@example.com"></div><button class="btn" id="sb" type="submit">Request access</button></div></form>
-<div class="msg" id="sm" role="status" aria-live="polite"></div>
-</div>
-<div class="box">
+<div class="box" style="max-width:640px">
 <h3>Already have a key?</h3>
 <p>Paste it here and we'll open PropX with it ready.</p>
 <form id="kf"><div class="row"><div><label for="key">Access key</label><input id="key" type="text" autocomplete="off" spellcheck="false" placeholder="px_…"></div><button class="btn line" type="submit">Open PropX</button></div></form>
 <div class="msg" id="km" role="status" aria-live="polite"></div>
-</div>
 </div>
 </section>
 </main>
@@ -102,19 +108,33 @@ footer{background:var(--hero);color:var(--hm);padding:36px 0;font-size:13px}foot
 (function(){
 var $=function(i){return document.getElementById(i)};
 var esc=function(s){var d=document.createElement("div");d.textContent=String(s==null?"":s);return d.innerHTML};
-function renderPlans(ps){var el=$("plans");
-if(!ps||!ps.length){el.innerHTML='<p>Plans are coming soon. Leave your email below and we will let you know.</p>';return}
+var me="",plansData=null;
+try{me=localStorage.getItem("propxSignup")||""}catch(x){}
+var q=new URLSearchParams(location.search).get("email");if(q&&!$("email").value)$("email").value=q.slice(0,254);
+function buyUrl(u){return u+(u.indexOf("?")>=0?"&":"?")+"prefilled_email="+encodeURIComponent(me)}
+function renderPlans(ps){plansData=ps;var el=$("plans");
+if(!ps||!ps.length){el.innerHTML='<p>Plans are coming soon. Create your account and we will email you when checkout opens.</p>';return}
 el.innerHTML=ps.map(function(p){
-var cta=p.buy?'<a class="btn" href="'+esc(p.buy)+'">Buy '+esc(p.name)+'</a><small class="n">Your key appears right after payment.</small>':'<a class="btn line" href="#request">Request access</a><small class="n">Online checkout is opening soon.</small>';
+var cta;
+if(!me)cta='<a class="btn line" href="#signup">Create your account first</a><small class="n">Step 1 above.</small>';
+else if(p.buy)cta='<a class="btn" href="'+esc(buyUrl(p.buy))+'">Buy '+esc(p.name)+'</a><small class="n">Your key appears right after payment and works once we approve your account.</small>';
+else cta='<span class="btn line" style="opacity:.6;cursor:default">Checkout opening soon</span><small class="n">You are signed up. We will email you when checkout opens.</small>';
 return '<div class="plan'+(p.popular?' pop':'')+'">'+(p.popular?'<span class="tg">Most popular</span>':'')+'<h3>'+esc(p.name)+'</h3><div class="pr">$'+esc(p.price)+'<small>/month</small></div><p>'+esc(p.blurb)+'</p><ul>'+(p.features||[]).map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+cta+'</div>'}).join("")}
+function signedUp(){$("sbox").innerHTML='<h3 style="margin:0 0 6px">You are signed up.</h3><p style="margin:0;color:var(--mute)">Account created for '+esc(me)+'. Choose a plan below. Use the same email at checkout so we can match your payment to your account. <a href="#" id="chg">Not you?</a></p>';
+var c=$("chg");if(c)c.onclick=function(e){e.preventDefault();try{localStorage.removeItem("propxSignup")}catch(x){}location.reload()}}
+if(me)signedUp();
 fetch("/api/plans").then(function(r){return r.json()}).then(function(j){renderPlans(j.plans)}).catch(function(){renderPlans([])});
-$("sf").addEventListener("submit",async function(e){
-e.preventDefault();var em=$("email").value.trim(),m=$("sm");$("sb").disabled=true;m.className="msg";m.textContent="";
-try{var r=await fetch("/api/signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em})});var j={};try{j=await r.json()}catch(x){}
-if(!r.ok)throw new Error(j.error||"Couldn't save your request. Try again in a moment.");
-m.className="msg good";m.textContent="Thanks. We'll email "+em+" about access.";$("email").value=""}
-catch(err){m.className="msg bad";m.textContent=err.message}
-finally{$("sb").disabled=false}});
+$("sf")&&$("sf").addEventListener("submit",async function(e){
+e.preventDefault();var m=$("sm");m.className="msg";m.textContent="";
+var name=$("name").value.trim(),em=$("email").value.trim(),co=$("company").value.trim();
+if(!name){m.className="msg bad";m.textContent="Enter your name.";return}
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){m.className="msg bad";m.textContent="Enter a valid email address.";return}
+$("sb").disabled=true;
+try{var r=await fetch("/api/signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:name,email:em,company:co})});var j={};try{j=await r.json()}catch(x){}
+if(!r.ok)throw new Error(j.error||"Couldn't create your account. Try again in a moment.");
+me=em.toLowerCase();try{localStorage.setItem("propxSignup",me)}catch(x){}
+signedUp();if(plansData)renderPlans(plansData);$("plansec").scrollIntoView({behavior:"smooth"})}
+catch(err){m.className="msg bad";m.textContent=err.message;$("sb").disabled=false}});
 $("kf").addEventListener("submit",function(e){e.preventDefault();var k=$("key").value.trim().replace(/^["']+|["']+$/g,"");
 if(/^px_[a-f0-9]{24}$/.test(k)){location.href="/?key="+encodeURIComponent(k)}else{$("km").className="msg bad";$("km").textContent="That doesn't look like a PropX key. Keys start with px_ followed by 24 characters."}});
 })();
