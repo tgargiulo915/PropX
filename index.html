@@ -200,7 +200,7 @@ footer{padding:44px 0}footer a{color:var(--brass)}
 </head>
 <body>
 <div class="top"><div class="wrap">
-<nav><a class="logo" href="#">Prop<b>X</b></a><div><a class="l" href="#report">Report</a><a class="l" href="#who">Who it's for</a><a class="l" href="#how">How it works</a><a class="l" href="#pricing">Pricing</a><a class="l" href="#faq">FAQ</a><a class="l" href="/access.html">Get access</a></div></nav>
+<nav><a class="logo" href="#">Prop<b>X</b></a><div><a class="l" href="#report">Report</a><a class="l" href="#who">Who it's for</a><a class="l" href="#how">How it works</a><a class="l" href="#pricing">Pricing</a><a class="l" href="#faq">FAQ</a><a class="l" href="/access.html">Sign up</a></div></nav>
 <header class="hero">
 <h1>Know the numbers before you buy.</h1>
 <p>Enter an address. PropX estimates the price, comps, repairs, rent and expenses, then works out profit, ROI and what to investigate.</p>
@@ -216,7 +216,7 @@ footer{padding:44px 0}footer a{color:var(--brass)}
 <dl><dt>Purchase price</dt><dd>$168,000</dd><dt>Repairs</dt><dd>$38,000</dd><dt>Renovated value</dt><dd>$312,000</dd><dt>Max offer (70% rule)</dt><dd>$180,400</dd></dl>
 <button class="btn" type="button" id="pk">Open this example</button>
 </aside>
-<div class="keyrow"><label for="key">Access key</label><input id="key" type="text" autocomplete="off" spellcheck="false" placeholder="px_…" aria-describedby="keyh"><span id="keyh">Subscribers get a key. <a href="/access.html">Request one</a>.</span></div>
+<div class="keyrow"><label for="key">Access key</label><input id="key" type="text" autocomplete="off" spellcheck="false" placeholder="px_…" aria-describedby="keyh"><span id="keyh">Subscribers get a key. <a href="/access.html">Sign up</a>.</span></div>
 </header>
 </div></div>
 
@@ -319,8 +319,8 @@ footer{padding:44px 0}footer a{color:var(--brass)}
 </section>
 
 <div class="band"><section class="wrap" id="access">
-<h2>Request access.</h2>
-<form class="em" id="sf"><div style="flex:1;min-width:220px"><label for="email" style="color:var(--hm)">Email address</label><input id="email" type="email" required placeholder="you@example.com"></div><button class="btn" id="sb" type="submit" style="align-self:flex-end">Request access</button></form>
+<h2>Ready to start?</h2>
+<form class="em" id="sf"><div style="flex:1;min-width:220px"><label for="email" style="color:var(--hm)">Email address</label><input id="email" type="email" required placeholder="you@example.com"></div><button class="btn" id="sb" type="submit" style="align-self:flex-end">Sign up</button></form>
 <div class="msg" id="sm" aria-live="polite"></div>
 <div class="list" id="sl" hidden></div>
 </section></div>
@@ -506,7 +506,7 @@ e.preventDefault();
 var a=$("addr").value.trim();
 if(!a){$("hint").textContent="Enter a property address first.";return}
 var ak=$("key").value.trim();
-if(!ak){$("hint").textContent="Enter your access key first. Subscribers get one. Request access below.";$("key").focus();return}
+if(!ak){$("hint").textContent="Enter your access key first. Subscribers get one. Sign up below.";$("key").focus();return}
 $("ad").textContent=a;
 $("report").scrollIntoView({behavior:"smooth"});
 $("gob").disabled=true;$("gob").textContent="Looking up…";$("hint").textContent="Pulling property data…";
@@ -552,6 +552,7 @@ el.textContent="Signups (only you can see this): "+(snap.docs.length?snap.docs.m
 $("sf").addEventListener("submit",async function(e){
 e.preventDefault();
 var em=$("email").value.trim(),m=$("sm");
+location.href="/access.html?email="+encodeURIComponent(em);return;
 $("sb").disabled=true;m.textContent="";
 try{var r=await fetch("/api/signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em})});var j={};try{j=await r.json()}catch(x){}
 if(!r.ok)throw new Error(j.error||"Couldn't save your request. Try again in a moment.");
@@ -559,8 +560,8 @@ m.textContent="Thanks. We'll email "+em+" about access.";$("email").value=""}
 catch(err){m.textContent=err.message}
 finally{$("sb").disabled=false}
 });
-function renderPlans(ps){var el=$("plans");if(!ps||!ps.length){el.innerHTML='<p>Plans are coming soon. Request access below.</p>';return}
-el.innerHTML=ps.map(function(p){var cta=p.buy?'<a class="btn" target="_blank" rel="noopener" href="'+esc(p.buy)+'">Buy '+esc(p.name)+'</a><small style="color:var(--mute)">Your access key appears right after payment.</small>':'<a class="btn line" href="/access.html">Request access</a>';
+function renderPlans(ps){var el=$("plans");if(!ps||!ps.length){el.innerHTML='<p>Plans are coming soon. Sign up below.</p>';return}
+el.innerHTML=ps.map(function(p){var cta='<a class="btn'+(p.popular?'':' line')+'" href="/access.html">Sign up to buy</a><small style="color:var(--mute)">Create an account, pay, and your key starts once approved.</small>';
 return '<div class="plan'+(p.popular?' pop':'')+'">'+(p.popular?'<span class="tg">Most popular</span>':'')+'<h3>'+esc(p.name)+'</h3><div class="pr">$'+esc(p.price)+'<small>/month</small></div><p style="margin:0;color:var(--mute)">'+esc(p.blurb)+'</p><ul>'+p.features.map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+cta+'</div>'}).join("")}
 fetch("/api/plans").then(function(r){return r.json()}).then(function(j){renderPlans(j.plans)}).catch(function(){renderPlans([])});
 try{var sk=localStorage.getItem("propxKey");var up=new URLSearchParams(location.search).get("key");if(up&&/^px_[a-f0-9]{24}$/.test(up)){sk=up;try{localStorage.setItem("propxKey",up)}catch(x){}history.replaceState(null,"",location.pathname);$("hint").textContent="Your access key is filled in. Enter a property address to run your search."}if(sk)$("key").value=sk}catch(x){}
