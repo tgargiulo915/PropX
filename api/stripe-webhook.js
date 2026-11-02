@@ -57,15 +57,20 @@ module.exports = async (req, res) => {
       const plan = planFor(price);
       const email = (obj.customer_details && obj.customer_details.email) || obj.customer_email || "";
       const key = newKey();
+      // Access starts once the sign-up is approved in the admin page. A sign-up approved before paying activates at once.
+      let sg = {};
+      if (email) { const [sr] = await pipe(conf, [["HGET", "propx:signups", email.toLowerCase()]]); try { sg = sr ? JSON.parse(sr) : {}; } catch (e) { sg = {}; } }
+      const approved = sg.status === "approved";
       const cust = {
-        name: email || "Stripe customer", email, limit: plan ? plan.searches : PLANS[0].searches, active: true,
+        name: sg.name || email || "Stripe customer", company: sg.company || "", email, limit: plan ? plan.searches : PLANS[0].searches, active: approved, approval: approved ? "approved" : "pending",
         plan: plan ? plan.id : "unmatched", created: new Date().toISOString(),
         stripe: { customer: obj.customer || "", subscription: obj.subscription || "", session: obj.id },
       };
       const cmds = [["SET", "propx:cust:" + key, JSON.stringify(cust)], ["SADD", "propx:custs", key], ["SET", "propx:sess:" + obj.id, key, "EX", 2592000]];
       if (obj.subscription) cmds.push(["SET", "propx:sub:" + obj.subscription, key]);
+      if (email && sg.email) cmds.push(["HSET", "propx:signups", email.toLowerCase(), JSON.stringify({ ...sg, paid: true, key })]);
       await pipe(conf, cmds);
-      return res.status(200).json({ ok: true, created: true, plan: cust.plan });
+      return res.status(200).json({ ok: true, created: true, plan: cust.plan, approval: cust.approval });
     }
 
     if (ev.type === "customer.subscription.updated" || ev.type === "customer.subscription.deleted") {
@@ -75,7 +80,7 @@ module.exports = async (req, res) => {
       if (!raw) return res.status(200).json({ ok: true, unknown: true });
       const c = JSON.parse(raw);
       const live = ev.type === "customer.subscription.updated" && ["active", "trialing", "past_due"].includes(obj.status);
-      c.active = live;
+      c.active = live && c.approval !== "pending" && c.approval !== "rejected";
       if (live) {
         const plan = planFor(obj.items && obj.items.data && obj.items.data[0] && obj.items.data[0].price);
         if (plan) { c.limit = plan.searches; c.plan = plan.id; }
