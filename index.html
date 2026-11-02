@@ -234,6 +234,12 @@ footer{padding:44px 0}footer a{color:var(--brass)}
 <p style="margin:0 0 14px"><button class="btn line" id="demo" type="button" style="padding:7px 14px;font-size:14px">Load an example property</button> <small style="color:var(--mute)">Uses made-up example data and no searches.</small></p>
 <div id="vc" hidden style="border-left:6px solid var(--good);padding:2px 0 2px 14px;margin:0 0 18px"><small style="color:var(--mute)">Estimated home value (blend of an automated value and comps, not an appraisal)</small><div id="vv" style="font:900 clamp(32px,6vw,46px) Archivo,sans-serif;letter-spacing:-.03em"></div><small id="vr" style="color:var(--mute)"></small></div>
 <div id="pd" class="pd" hidden style="margin:0 0 18px"><h3>Property details</h3><div class="facts" id="pf"></div><ul class="chips" id="pt"></ul><div class="pmap" id="pm"></div></div>
+<details id="rh" style="margin:0 0 18px"><summary style="cursor:pointer;font-weight:700">Estimate the repair budget</summary>
+<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"><div><label for="rhsf">Square feet</label><input id="rhsf" type="number" inputmode="decimal" min="0" placeholder="e.g. 1500" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;font:inherit"></div><div><label for="rhs">How much work?</label><select id="rhs" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:inherit;font:inherit"><option value="15">Cosmetic: paint, floors, fixtures ($15/sq ft)</option><option value="35" selected>Moderate: kitchen and bath refresh ($35/sq ft)</option><option value="60">Heavy: layout and major updates ($60/sq ft)</option><option value="90">Full gut rehab ($90/sq ft)</option></select></div></div>
+<fieldset style="border:0;padding:0;margin:12px 0 0"><legend style="font-size:13px;margin-bottom:6px">Add big items</legend><div id="rha" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px 14px"></div></fieldset>
+<p class="fine" id="rhout" aria-live="polite" style="margin:10px 0 0"></p>
+<button type="button" class="btn line" id="rhuse" style="margin-top:8px">Use this as the repairs number</button>
+<p class="fine" style="margin:8px 0 0">Rough national averages with a 10% buffer for surprises. Costs vary by area and contractor, so get real quotes before you offer.</p></details>
 <div id="cd" hidden style="margin:0 0 18px"><label for="cond">Condition of the home</label><select id="cond"><option value="">Select the condition</option><option value="0">Needs full rehab</option><option value="1">Dated, needs updates</option><option value="2">Average, maintained</option><option value="3">Updated</option><option value="4">Fully renovated</option></select><p class="fine" id="cdo" aria-live="polite" style="margin:8px 0 0"></p></div>
 <div id="wk" hidden style="margin:0 0 18px"><h3>Work done on this house</h3><p class="fine" id="wkn" style="margin:0 0 8px"></p><ul class="wl" id="wkl"></ul><label for="wnote">Other work done or planned (from the seller, an inspection or the permit office)</label><textarea id="wnote" rows="3" placeholder="e.g. Roof replaced 2021, new HVAC 2022, kitchen remodel 2023"></textarea></div>
 <div class="ins">
@@ -444,6 +450,7 @@ setMode("flip");$("report").scrollIntoView({behavior:"smooth"})};
 
 function showDetails(d,addr,photo){
 var box=$("pd");if(!d){box.hidden=true;return}
+if(Number(d.sqft)>0&&$("rhsf")){$("rhsf").value=Math.round(Number(d.sqft));rhCalc()}
 var n=function(x){return (x===null||x===undefined||x==="")?null:x};
 var num=function(x){var v=Number(x);return isFinite(v)&&v>0?v.toLocaleString("en-US"):null};
 var facts=[
@@ -481,6 +488,16 @@ pm.innerHTML=html;
 if($("mf")){var pick=function(on){$("mt1").setAttribute("aria-selected",on===1);$("mt2").setAttribute("aria-selected",on===2);$("mf").src=on===1?satU:mapU;$("mf").title=on===1?"Aerial view of the property":"Map of the property"};$("mt1").onclick=function(){pick(1)};$("mt2").onclick=function(){pick(2)}}
 box.hidden=!(facts.length||chips.length||html);
 }
+var RH_ITEMS=[["Roof",9000],["HVAC",8000],["Windows",7000],["Full kitchen remodel",15000],["Bathroom remodel",7500],["Electrical rewire",9000],["Plumbing re-pipe",8000],["Foundation or structural",12000]];
+function rhCalc(){var sf=Number($("rhsf").value)||0,t=sf*Number($("rhs").value),k=0,box=$("rha").querySelectorAll("input:checked");
+for(var i=0;i<box.length;i++)k+=Number(box[i].value);
+var sub=t+k,tot=Math.round(sub*1.1/500)*500;
+$("rhout").textContent=sf>0||k>0?"Estimated repairs: "+usd(tot)+" ("+usd(Math.round(sub))+" plus a 10% buffer).":"Enter the square feet to see an estimate.";
+return tot}
+function rhInit(){var h="";RH_ITEMS.forEach(function(x,i){h+='<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:0;color:inherit"><input type="checkbox" value="'+x[1]+'" style="width:auto"> '+x[0]+' ('+usd(x[1])+')</label>'});
+$("rha").innerHTML=h;$("rh").addEventListener("input",rhCalc);
+$("rhuse").onclick=function(){var v=rhCalc();if(v>0){$("repairs").value=v;calc();$("repairs").focus()}};rhCalc()}
+rhInit();
 function condText(){
 var s=$("cond").value;
 if(!lastEst){$("cdo").textContent="";return}
