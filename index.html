@@ -126,6 +126,77 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 .recent button:hover{border-color:var(--brass)}
 @media (max-width:520px){.facts{grid-template-columns:1fr 1fr}}
 </style>
+<style id="v4">
+/* spacing: .wrap padding used to override section padding, so sections touched each other */
+section.wrap{padding-top:84px;padding-bottom:84px}
+section.wrap+section.wrap{padding-top:0}
+#report{padding-top:72px}#report h2{margin-bottom:28px}
+.band section.wrap{padding-top:72px;padding-bottom:72px}
+h2{font-size:clamp(30px,4.4vw,46px);max-width:20ch;margin-bottom:12px}
+h2+p,h2+.sub{color:var(--mute);max-width:58ch;margin:0 0 30px}
+/* header */
+.top{background:radial-gradient(900px 420px at 85% 0%,rgba(224,165,38,.16),transparent 60%),radial-gradient(700px 500px at 0% 100%,rgba(158,194,186,.10),transparent 60%),var(--hero)}
+nav a.l:last-child{background:var(--brass);color:#2A1D00;font-weight:800;padding:8px 16px;border-radius:6px;margin-left:26px}
+nav a.l:hover{color:#fff}nav a.l:last-child:hover{color:#2A1D00;filter:brightness(1.07)}
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);column-gap:56px;align-items:start;padding:40px 0 84px}
+.hero>*{grid-column:1}
+.hero h1{font-size:clamp(44px,6.2vw,80px);max-width:12ch;line-height:1}
+.hero p{font-size:19px;line-height:1.5}
+.hero .bar{box-shadow:0 14px 34px rgba(0,0,0,.28);padding:7px}
+.hero .bar input{font-size:17px}
+.hero .hint{min-height:20px}
+.trust{margin-top:22px}.trust li{color:var(--hm)}.trust li:before{color:var(--brass)}
+.keyrow{margin-top:18px;padding-top:16px;border-top:1px solid rgba(158,194,186,.22);display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--hm)}
+.keyrow input{border-color:rgba(158,194,186,.45);color:var(--hi);background:rgba(255,255,255,.05)}
+.peek{grid-column:2;grid-row:1/span 9;align-self:center;background:var(--card);color:var(--ink);border-radius:14px;padding:22px 22px 20px;box-shadow:0 30px 60px rgba(0,0,0,.35);transform:rotate(1.2deg)}
+.peek small.t{color:var(--mute);font-size:12.5px}
+.peek .pa{font-weight:800;font-size:17px;letter-spacing:-.01em;margin:2px 0 14px}
+.peek .pr{display:flex;align-items:center;gap:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.peek svg{width:92px;height:92px;flex:none}.peek .sc{font:900 26px Archivo,sans-serif}
+.peek .pv{font-weight:800;font-size:19px;color:var(--good)}.peek .ps{font-size:13.5px;color:var(--mute)}
+.peek dl{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:14px 0;font-size:14.5px}.peek dt{color:var(--mute)}.peek dd{margin:0;font-weight:700;text-align:right}
+.peek button{width:100%}
+/* report panels */
+.panel{box-shadow:0 1px 0 rgba(0,0,0,.03),0 12px 30px -14px rgba(11,59,54,.22);border-radius:14px}
+.score{position:sticky;top:16px}
+.tab[aria-selected="true"]{background:var(--hero);border-color:var(--hero);color:var(--hi)}
+.tab{transition:background .15s,color .15s}
+.btn{border-radius:7px;transition:filter .15s,transform .15s}.btn:hover{filter:brightness(1.06)}.btn:active{transform:translateY(1px)}
+.btn.line:hover{background:var(--hero);color:var(--hi);filter:none}
+.acts .btn{border-color:var(--line);color:var(--ink)}.acts .btn:hover{border-color:var(--hero)}
+.kv dt.tot,.kv dd.tot{font-weight:800}
+.ins input,.ins select{border-radius:8px}
+/* what's in every report */
+.items li{padding:16px 0}.items b{font-size:16.5px}
+/* who it's for */
+.who>*{}
+.who dt{border-top-width:3px}
+/* how it works */
+.steps{gap:28px;margin-top:6px}.step{border:0;padding:0;position:relative}
+.step b{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--hero);color:var(--brass);font:900 18px Archivo,sans-serif;margin-bottom:12px}
+.step h3{font-size:19px;margin:0 0 6px}
+/* pricing */
+.plans{gap:18px;align-items:stretch}
+.plan{border-radius:14px;padding:26px;border-width:1px;box-shadow:0 12px 30px -18px rgba(11,59,54,.35)}
+.plan.pop{background:var(--hero);color:var(--hi);border-color:var(--hero);transform:translateY(-8px);box-shadow:0 26px 50px -20px rgba(11,59,54,.6)}
+.plan.pop p,.plan.pop .pr small{color:var(--hm)!important}.plan.pop li::marker{color:var(--brass)}
+.plan.pop .btn.line{color:var(--hi);border-color:var(--hm)}.plan.pop .btn.line:hover{background:var(--brass);color:#2A1D00;border-color:var(--brass)}
+.plan .pr{font-size:46px}
+.plan ul{display:grid;align-content:start;gap:7px;list-style:none;padding:0}.plan li{padding-left:24px;position:relative}.plan li:before{content:"\2713";position:absolute;left:0;color:var(--good);font-weight:900}.plan.pop li:before{color:var(--brass)}
+/* faq */
+.faq>*{max-width:760px}.faq details{padding:0}.faq summary{list-style:none;padding:18px 36px 18px 0;position:relative;font-size:17.5px}.faq summary::-webkit-details-marker{display:none}
+.faq summary:after{content:"+";position:absolute;right:4px;top:50%;transform:translateY(-52%);font:500 26px Archivo,sans-serif;color:var(--mute);transition:transform .2s}
+.faq details[open] summary:after{transform:translateY(-52%) rotate(45deg)}
+.faq details p{padding:0 36px 18px 0;margin:0}
+/* access + footer */
+#access h2{max-width:18ch}
+footer{padding:44px 0}footer a{color:var(--brass)}
+.stick{border-radius:10px}
+@media(max-width:940px){.hero{grid-template-columns:1fr}.peek{display:none}.score{position:static}.plan.pop{transform:none}}
+@media(max-width:640px){section.wrap{padding-top:60px;padding-bottom:60px}.hero{padding:24px 0 56px}nav a.l:last-child{display:inline-block}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
 </head>
 <body>
 <div class="top"><div class="wrap">
@@ -138,6 +209,13 @@ footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
 <div id="recent" class="recent" hidden></div>
 <p class="hint" style="margin-top:4px"><a href="#report" style="color:var(--brass);font-weight:600">See a sample report</a> before you search.</p>
 <ul class="trust"><li>Flip, rental, wholesale and BRRRR in one report</li><li>Comps, rent and risk flags from real property data</li><li>Share, print and save every deal</li></ul>
+<aside class="peek" aria-label="Example report">
+<small class="t">Example report with made-up numbers</small>
+<div class="pa">1428 Maple Street, Columbus, OH</div>
+<div class="pr"><svg viewBox="0 0 140 140" role="img" aria-label="Deal score 100"><circle cx="70" cy="70" r="56" fill="none" stroke="var(--line)" stroke-width="13"/><circle cx="70" cy="70" r="56" fill="none" stroke="var(--good)" stroke-width="13" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="0" transform="rotate(-90 70 70)"/><text x="70" y="80" text-anchor="middle" font-family="Archivo,sans-serif" font-weight="900" font-size="38" fill="currentColor">100</text></svg><div><div class="pv">Strong flip</div><div class="ps">$66,938 profit on $85,702 cash, 78% ROI</div></div></div>
+<dl><dt>Purchase price</dt><dd>$168,000</dd><dt>Repairs</dt><dd>$38,000</dd><dt>Renovated value</dt><dd>$312,000</dd><dt>Max offer (70% rule)</dt><dd>$180,400</dd></dl>
+<button class="btn" type="button" id="pk">Open this example</button>
+</aside>
 <div class="keyrow"><label for="key">Access key</label><input id="key" type="text" autocomplete="off" spellcheck="false" placeholder="px_…" aria-describedby="keyh"><span id="keyh">Subscribers get a key. <a href="#access">Request one</a>.</span></div>
 </header>
 </div></div>
@@ -342,6 +420,7 @@ ids.forEach(function(k){if(d.v[k]!==undefined)$(k).value=d.v[k]});$("ad").textCo
 $("csv").onclick=function(){calc();var q=function(x){return'"'+String(x).replace(/"/g,'""')+'"'},r=[["Address",$("ad").textContent],["View",mode],["Result",curSum]];ids.forEach(function(i){r.push([i,$(i).value])});
 var blob=new Blob([r.map(function(x){return x.map(q).join(",")}).join("\n")],{type:"text/csv"}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download="propx-deal.csv";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},500)};
 showDeals();
+var pk=$("pk");if(pk)pk.onclick=function(){$("demo").click()};
 $("sva").onclick=function(){calc();scnA=curSum;calc()};
 $("prt").onclick=function(){calc();window.print()};
 $("shr").onclick=function(){calc();var st={m:mode,a:$("ad").textContent,v:{}};ids.forEach(function(i){st.v[i]=$(i).value});var u=location.origin+"/#d="+btoa(unescape(encodeURIComponent(JSON.stringify(st))));
