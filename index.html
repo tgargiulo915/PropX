@@ -87,7 +87,7 @@ h3{font-size:18px;margin:22px 0 8px;font-weight:800;letter-spacing:-.01em}
 .who dt{font-weight:900;font-size:21px;letter-spacing:-.02em;margin-bottom:6px;border-top:4px solid var(--brass);padding-top:10px}
 .who dd{margin:0;color:var(--mute);font-size:15px}
 .em{display:flex;gap:8px;max-width:520px;flex-wrap:wrap}.em input{flex:1;min-width:200px;padding:12px}
-.msg{margin-top:10px;font-size:15px;min-height:22px}
+.msg{margin-top:10px;font-size:15px;min-height:22px}.msg:empty{display:none}
 .list{margin-top:18px;font-size:14px;color:var(--mute)}
 footer{background:var(--hero);color:var(--hm);padding:36px 0;font-size:13px}
 footer p{max-width:80ch;margin:6px 0}footer b{color:var(--hi)}
@@ -320,6 +320,7 @@ footer{padding:44px 0}footer a{color:var(--brass)}
 
 <div class="band"><section class="wrap" id="access">
 <h2>Ready to start?</h2>
+<p style="color:var(--hm);margin:0 0 18px;max-width:52ch">Create your account in under a minute, pick a plan, and your key starts working once we approve you.</p>
 <form class="em" id="sf"><div style="flex:1;min-width:220px"><label for="email" style="color:var(--hm)">Email address</label><input id="email" type="email" required placeholder="you@example.com"></div><button class="btn" id="sb" type="submit" style="align-self:flex-end">Sign up</button></form>
 <div class="msg" id="sm" aria-live="polite"></div>
 <div class="list" id="sl" hidden></div>
@@ -561,7 +562,7 @@ catch(err){m.textContent=err.message}
 finally{$("sb").disabled=false}
 });
 function renderPlans(ps){var el=$("plans");if(!ps||!ps.length){el.innerHTML='<p>Plans are coming soon. Sign up below.</p>';return}
-el.innerHTML=ps.map(function(p){var cta='<a class="btn'+(p.popular?'':' line')+'" href="/access.html">Sign up to buy</a><small style="color:var(--mute)">Create an account, pay, and your key starts once approved.</small>';
+el.innerHTML=ps.map(function(p){var cta='<a class="btn'+(p.popular?'':' line')+'" href="/access.html">Sign up to buy</a><small style="color:'+(p.popular?'#B9D6CF':'var(--mute)')+'">Create an account, pay, and your key starts once approved.</small>';
 return '<div class="plan'+(p.popular?' pop':'')+'">'+(p.popular?'<span class="tg">Most popular</span>':'')+'<h3>'+esc(p.name)+'</h3><div class="pr">$'+esc(p.price)+'<small>/month</small></div><p style="margin:0;color:var(--mute)">'+esc(p.blurb)+'</p><ul>'+p.features.map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+cta+'</div>'}).join("")}
 fetch("/api/plans").then(function(r){return r.json()}).then(function(j){renderPlans(j.plans)}).catch(function(){renderPlans([])});
 try{var sk=localStorage.getItem("propxKey");var up=new URLSearchParams(location.search).get("key");if(up&&/^px_[a-f0-9]{24}$/.test(up)){sk=up;try{localStorage.setItem("propxKey",up)}catch(x){}history.replaceState(null,"",location.pathname);$("hint").textContent="Your access key is filled in. Enter a property address to run your search."}if(sk)$("key").value=sk}catch(x){}
