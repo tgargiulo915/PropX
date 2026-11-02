@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
     if (!key) return res.status(200).json({ pending: true });
     const [raw] = await pipe(conf, [["GET", "propx:cust:" + key]]);
     const c = raw ? JSON.parse(raw) : {};
-    return res.status(200).json({ key, plan: c.plan || "", limit: Number(c.limit) || 0 });
+    return res.status(200).json({ key, plan: c.plan || "", limit: Number(c.limit) || 0, approved: c.approval !== "pending" && c.approval !== "rejected" });
   } catch (e) {
     return res.status(500).json({ error: "Couldn't look that up. Try again in a moment." });
   }
