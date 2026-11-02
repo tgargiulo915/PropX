@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Get access | PropX</title>
+<meta name="description" content="Choose a PropX plan or request access. Each plan comes with a personal access key and a monthly number of property searches.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://propx-zeta.vercel.app/access.html">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800;900&display=swap">
+<style>
+:root{--hero:#0B3B36;--hi:#EAF4F1;--hm:#9EC2BA;--brass:#E0A526;--paper:#F7F6F2;--card:#fff;--ink:#16211F;--mute:#5E6B68;--line:#DAD8CF;--good:#117A55;--bad:#B42318}
+@media (prefers-color-scheme:dark){:root{--paper:#101716;--card:#182120;--ink:#E7EEEC;--mute:#97A8A4;--line:#27332F;--good:#4CC38A;--bad:#F27B70}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.55 Archivo,system-ui,sans-serif}
+h1,h2{margin:0;line-height:1.05;letter-spacing:-.03em;font-weight:900}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+.top{background:radial-gradient(900px 420px at 85% 0%,rgba(224,165,38,.16),transparent 60%),var(--hero);color:var(--hi)}
+nav{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.logo{font-weight:900;font-size:20px;letter-spacing:-.03em;color:var(--hi);text-decoration:none}.logo b{color:var(--brass)}
+nav a.l{color:var(--hm);text-decoration:none;font-weight:500;font-size:15px}nav a.l:hover{color:#fff}
+.hero{padding:34px 0 64px}
+.hero h1{font-size:clamp(38px,6vw,64px);max-width:14ch}
+.hero p{max-width:56ch;color:var(--hm);font-size:19px;margin:18px 0 0}
+section.wrap{padding-top:64px;padding-bottom:64px}
+h2{font-size:clamp(26px,4vw,38px);margin-bottom:12px}
+.lead{color:var(--mute);max-width:58ch;margin:0 0 28px}
+.btn{border:0;background:var(--brass);color:#2A1D00;font:800 16px Archivo,sans-serif;padding:12px 22px;border-radius:7px;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+.btn:hover{filter:brightness(1.06)}.btn:disabled{opacity:.6;cursor:wait}
+.btn.line{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;align-items:stretch}
+.plan{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 30px -18px rgba(11,59,54,.35)}
+.plan.pop{background:var(--hero);color:var(--hi);border-color:var(--hero)}
+.plan h3{margin:0;font-size:20px}.plan .pr{font:900 46px Archivo,sans-serif;letter-spacing:-.03em}.plan .pr small{font:500 15px Archivo,sans-serif;color:var(--mute)}
+.plan p{margin:0;color:var(--mute)}.plan.pop p,.plan.pop .pr small{color:var(--hm)}
+.plan ul{display:grid;align-content:start;gap:7px;list-style:none;padding:0;margin:0;flex:1;font-size:15px}.plan li{padding-left:24px;position:relative}.plan li:before{content:"\2713";position:absolute;left:0;color:var(--good);font-weight:900}.plan.pop li:before{color:var(--brass)}
+.plan .tg{font-size:12px;font-weight:800;color:#2A1D00;background:var(--brass);border-radius:99px;padding:2px 10px;align-self:flex-start}
+.plan small.n{color:var(--mute);font-size:13px}.plan.pop small.n{color:var(--hm)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+.box h3{margin:0 0 6px;font-size:20px}.box p{margin:0 0 14px;color:var(--mute)}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+input{font:inherit;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}.row>div{flex:1;min-width:200px}
+.msg{min-height:22px;margin-top:10px;font-size:14px}.bad{color:var(--bad)}.good{color:var(--good)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s}.steps li:before{content:counter(s);display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--hero);color:var(--brass);font-weight:900;margin-bottom:10px}
+.steps b{display:block;margin-bottom:4px}.steps span{color:var(--mute)}
+footer{background:var(--hero);color:var(--hm);padding:36px 0;font-size:13px}footer a{color:var(--brass)}footer b{color:var(--hi)}footer p{margin:6px 0;max-width:80ch}
+@media(max-width:760px){.two{grid-template-columns:1fr}section.wrap{padding-top:48px;padding-bottom:48px}}
+</style>
+</head>
+<body>
+<div class="top"><div class="wrap">
+<nav><a class="logo" href="/">Prop<b>X</b></a><a class="l" href="/">Back to the report</a></nav>
+<header class="hero">
+<h1>Get access to PropX.</h1>
+<p>Pick a plan and you get a personal access key with a monthly number of property searches. One search is one address lookup.</p>
+</header>
+</div></div>
+
+<main>
+<section class="wrap" style="padding-bottom:24px">
+<h2>Choose a plan.</h2>
+<p class="lead">Monthly plans. Cancel any time. Changing the numbers in a report is free and never uses a search.</p>
+<div class="plans" id="plans"><p>Loading plans…</p></div>
+</section>
+
+<section class="wrap">
+<h2>How you get your key.</h2>
+<ol class="steps">
+<li><b>Pick a plan</b><span>Pay for the plan you want. Payment is handled by Stripe, so PropX never sees your card.</span></li>
+<li><b>Get your key right away</b><span>After you pay, you land on a page that shows your access key. Copy it and keep it safe.</span></li>
+<li><b>Start checking deals</b><span>Paste the key into PropX, or use the link on that page. Your searches reset on the first of each month.</span></li>
+</ol>
+</section>
+
+<section class="wrap" style="padding-top:0">
+<div class="two">
+<div class="box" id="request">
+<h3>Not ready to buy?</h3>
+<p>Leave your email and we'll get in touch about access.</p>
+<form id="sf"><div class="row"><div><label for="email">Email address</label><input id="email" type="email" required autocomplete="email" placeholder="you@example.com"></div><button class="btn" id="sb" type="submit">Request access</button></div></form>
+<div class="msg" id="sm" role="status" aria-live="polite"></div>
+</div>
+<div class="box">
+<h3>Already have a key?</h3>
+<p>Paste it here and we'll open PropX with it ready.</p>
+<form id="kf"><div class="row"><div><label for="key">Access key</label><input id="key" type="text" autocomplete="off" spellcheck="false" placeholder="px_…"></div><button class="btn line" type="submit">Open PropX</button></div></form>
+<div class="msg" id="km" role="status" aria-live="polite"></div>
+</div>
+</div>
+</section>
+</main>
+
+<footer><div class="wrap"><p><b>PropX</b> — Know the numbers before you buy.</p>
+<p>Estimates for informational purposes only. Not financial, legal or investment advice. Verify all figures independently before making an offer.</p>
+<p><a href="/terms.html">Terms &amp; Privacy</a></p></div></footer>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){var d=document.createElement("div");d.textContent=String(s==null?"":s);return d.innerHTML};
+function renderPlans(ps){var el=$("plans");
+if(!ps||!ps.length){el.innerHTML='<p>Plans are coming soon. Leave your email below and we will let you know.</p>';return}
+el.innerHTML=ps.map(function(p){
+var cta=p.buy?'<a class="btn" href="'+esc(p.buy)+'">Buy '+esc(p.name)+'</a><small class="n">Your key appears right after payment.</small>':'<a class="btn line" href="#request">Request access</a><small class="n">Online checkout is opening soon.</small>';
+return '<div class="plan'+(p.popular?' pop':'')+'">'+(p.popular?'<span class="tg">Most popular</span>':'')+'<h3>'+esc(p.name)+'</h3><div class="pr">$'+esc(p.price)+'<small>/month</small></div><p>'+esc(p.blurb)+'</p><ul>'+(p.features||[]).map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+cta+'</div>'}).join("")}
+fetch("/api/plans").then(function(r){return r.json()}).then(function(j){renderPlans(j.plans)}).catch(function(){renderPlans([])});
+$("sf").addEventListener("submit",async function(e){
+e.preventDefault();var em=$("email").value.trim(),m=$("sm");$("sb").disabled=true;m.className="msg";m.textContent="";
+try{var r=await fetch("/api/signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em})});var j={};try{j=await r.json()}catch(x){}
+if(!r.ok)throw new Error(j.error||"Couldn't save your request. Try again in a moment.");
+m.className="msg good";m.textContent="Thanks. We'll email "+em+" about access.";$("email").value=""}
+catch(err){m.className="msg bad";m.textContent=err.message}
+finally{$("sb").disabled=false}});
+$("kf").addEventListener("submit",function(e){e.preventDefault();var k=$("key").value.trim().replace(/^["']+|["']+$/g,"");
+if(/^px_[a-f0-9]{24}$/.test(k)){location.href="/?key="+encodeURIComponent(k)}else{$("km").className="msg bad";$("km").textContent="That doesn't look like a PropX key. Keys start with px_ followed by 24 characters."}});
+})();
+</script>
+</body>
+</html>
