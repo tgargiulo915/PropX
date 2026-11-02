@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
       const customers = (keys || []).map((k, i) => {
         let c = {};
         try { c = JSON.parse(rows[i] || "{}"); } catch (e) { /* ignore */ }
-        return { key: k, name: c.name || "(unnamed)", email: c.email || "", plan: c.plan || "", note: c.note || "", limit: Number(c.limit) || 0, active: c.active !== false, used: Number(rows[len + i]) || 0, created: c.created || "" };
+        return { key: k, name: c.name || "(unnamed)", email: c.email || "", plan: c.plan || "", note: c.note || "", limit: Number(c.limit) || 0, active: c.active !== false, approval: c.approval || "approved", company: c.company || "", used: Number(rows[len + i]) || 0, created: c.created || "" };
       }).sort((a, b) => (a.created < b.created ? 1 : -1));
       const cap = parseInt(process.env.MONTHLY_REQUEST_LIMIT || "45", 10);
       const mrr = customers.reduce((s, c) => { const p = PLANS.find((x) => x.id === c.plan); return s + (c.active && p ? p.price : 0); }, 0);
@@ -75,17 +75,47 @@ module.exports = async (req, res) => {
       if (!raw) return res.status(404).json({ error: "No customer has that key." });
       const c = JSON.parse(raw);
       if (body.limit !== undefined) c.limit = Math.max(0, Math.min(100000, parseInt(body.limit, 10) || 0));
-      if (body.active !== undefined) c.active = !!body.active;
+      if (body.active !== undefined) { c.active = !!body.active; if (c.active) c.approval = "approved"; }
       if (body.note !== undefined) c.note = String(body.note).trim().slice(0, 200);
       if (body.name !== undefined) c.name = String(body.name).trim().slice(0, 80) || c.name;
       await pipe(conf, [["SET", "propx:cust:" + key, JSON.stringify(c)]]);
       return res.status(200).json({ ok: true });
     }
 
+    if (action === "approve" || action === "reject") {
+      const key = String(body.key || "");
+      if (!KEY_RE.test(key)) return res.status(400).json({ error: "Invalid key." });
+      const [raw] = await pipe(conf, [["GET", "propx:cust:" + key]]);
+      if (!raw) return res.status(404).json({ error: "No customer has that key." });
+      const c = JSON.parse(raw);
+      const ok = action === "approve";
+      c.active = ok;
+      c.approval = ok ? "approved" : "rejected";
+      const cmds = [["SET", "propx:cust:" + key, JSON.stringify(c)]];
+      if (c.email) {
+        const [sr] = await pipe(conf, [["HGET", "propx:signups", String(c.email).toLowerCase()]]);
+        if (sr) { let r = {}; try { r = JSON.parse(sr); } catch (e) { r = {}; } cmds.push(["HSET", "propx:signups", String(c.email).toLowerCase(), JSON.stringify({ ...r, status: ok ? "approved" : "rejected" })]); }
+      }
+      await pipe(conf, cmds);
+      return res.status(200).json({ ok: true, approval: c.approval });
+    }
+
+    if (action === "setsignup") {
+      const email = String(body.email || "").trim().toLowerCase();
+      const status = ["approved", "rejected", "pending"].includes(body.status) ? body.status : "";
+      if (!email || !status) return res.status(400).json({ error: "Missing email or status." });
+      const [sr] = await pipe(conf, [["HGET", "propx:signups", email]]);
+      if (!sr) return res.status(404).json({ error: "No sign-up for that email." });
+      let r = {};
+      try { r = JSON.parse(sr); } catch (e) { r = {}; }
+      await pipe(conf, [["HSET", "propx:signups", email, JSON.stringify({ ...r, status })]]);
+      return res.status(200).json({ ok: true });
+    }
+
     if (action === "signups") {
       const [h] = await pipe(conf, [["HGETALL", "propx:signups"]]);
       const list = [];
-      for (let i = 0; h && i < h.length; i += 2) { let at = ""; try { at = JSON.parse(h[i + 1]).at || ""; } catch (e) { /* ignore */ } list.push({ email: h[i], at }); }
+      for (let i = 0; h && i < h.length; i += 2) { let r = {}; try { r = JSON.parse(h[i + 1]); } catch (e) { /* ignore */ } list.push({ email: h[i], name: r.name || "", company: r.company || "", at: r.at || "", status: r.status || "pending", paid: !!r.paid }); }
       list.sort((x, y) => (x.at < y.at ? 1 : -1));
       return res.status(200).json({ signups: list.slice(0, 500) });
     }
