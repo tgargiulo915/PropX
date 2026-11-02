@@ -130,6 +130,7 @@ module.exports = async (req, res) => {
     cust = raw ? JSON.parse(raw) : null;
   } catch (e) { return unavailable(e); }
   if (!cust) return res.status(401).json({ error: "That access key isn't valid. Check it and try again.", needKey: true });
+  if (cust.approval === "pending") return res.status(403).json({ error: "Your payment was received. Your account is waiting for approval, and your key will work as soon as it is approved." });
   if (cust.active === false) return res.status(403).json({ error: "This access key is turned off. Contact support." });
   const limit = Number(cust.limit) || 0;
   // Burst guard: stops a leaked or shared key from burning the month in a minute.
